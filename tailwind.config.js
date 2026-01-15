@@ -67,7 +67,6 @@ module.exports = {
                                 'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
                                 border: 'hsl(var(--sidebar-border))',
                                 ring: 'hsl(var(--sidebar-ring))'
-                        }
                         },
                         'kid-blue': '#4A90E2',
                         'kid-pink': '#FF6B9D',
