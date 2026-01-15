@@ -240,8 +240,8 @@ All requirements from the problem statement have been successfully implemented i
 ## 🚀 Deployment Instructions
 
 ### Immediate Access:
-1. **Homepage:** https://mandala-maker-2.preview.emergentagent.com
-2. **Admin Panel:** https://mandala-maker-2.preview.emergentagent.com/admin/login
+1. **Homepage:** https://colorpages-8.preview.emergentagent.com
+2. **Admin Panel:** https://colorpages-8.preview.emergentagent.com/admin/login
 
 ### Admin Login:
 - Email: admin@printables.com
@@ -343,7 +343,7 @@ This is a **complete, fully functional** printable coloring pages platform with:
 **NO PLACEHOLDERS. NO MISSING FEATURES. READY TO USE.**
 
 The site is live and functional at:
-👉 https://mandala-maker-2.preview.emergentagent.com
+👉 https://colorpages-8.preview.emergentagent.com
 
 ---
 
