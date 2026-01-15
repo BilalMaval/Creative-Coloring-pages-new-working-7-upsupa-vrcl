@@ -84,6 +84,9 @@ module.exports = {
                         '2xl': '1.5rem',
                         '3xl': '2rem'
                 },
+                fontFamily: {
+                        'kid': ['Comic Sans MS', 'Balsamiq Sans', 'cursive', 'sans-serif']
+                },
                 keyframes: {
                         'accordion-down': {
                                 from: {
