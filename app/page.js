@@ -241,6 +241,16 @@ export default async function Home() {
               );
             })}
           </div>
+
+          {/* See More Button */}
+          <div className="text-center mt-10">
+            <Link href={`/collection/${collections[1].slug}`}>
+              <Button size="lg" className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
+                <Star className="mr-2 h-6 w-6" />
+                See More {collections[1].name}
+              </Button>
+            </Link>
+          </div>
         </section>
       )}
 
