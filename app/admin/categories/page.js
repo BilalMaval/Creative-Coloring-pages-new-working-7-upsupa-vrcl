@@ -9,7 +9,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit, Trash2, Loader2 } from 'lucide-react';
-import { generateSlug } from '@/lib/utils-server';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
@@ -33,7 +32,9 @@ export default function AdminCategoriesPage() {
       const res = await fetch('/api/categories');
       const data = await res.json();
       if (data.success) {
-        setCategories(data.data);
+        // Filter to show only child categories (not main collections)
+        const childCategories = data.data.filter(cat => cat.parentId !== null);
+        setCategories(childCategories);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -84,7 +85,7 @@ export default function AdminCategoriesPage() {
     try {
       const url = '/api/categories';
       const method = editingCategory ? 'PUT' : 'POST';
-      const body = editingCategory ? { ...formData, _id: editingCategory._id } : formData;
+      const body = editingCategory ? { ...formData, id: editingCategory.id } : formData;
 
       const res = await fetch(url, {
         method,
@@ -125,6 +126,8 @@ export default function AdminCategoriesPage() {
       const data = await res.json();
       if (data.success) {
         fetchCategories();
+      } else {
+        alert(data.error || 'Failed to delete category');
       }
     } catch (error) {
       alert('Failed to delete category');
@@ -226,7 +229,7 @@ export default function AdminCategoriesPage() {
       ) : categories.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => (
-            <Card key={category._id}>
+            <Card key={category.id}>
               <CardHeader>
                 {category.image && (
                   <div className="mb-2 aspect-video relative rounded overflow-hidden bg-muted">
@@ -234,17 +237,23 @@ export default function AdminCategoriesPage() {
                   </div>
                 )}
                 <CardTitle>{category.name}</CardTitle>
+                {category.parent && (
+                  <p className="text-xs text-muted-foreground">Collection: {category.parent.name}</p>
+                )}
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
                   {category.description || 'No description'}
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  {category._count?.products || 0} products
                 </p>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => handleEdit(category)}>
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(category._id)}>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)}>
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
                   </Button>

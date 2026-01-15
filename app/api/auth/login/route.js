@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 import { verifyPassword, createAuthToken } from '@/lib/auth';
 
 export async function POST(request) {
@@ -14,13 +14,22 @@ export async function POST(request) {
       );
     }
     
-    const users = await getCollection('users');
-    const user = await users.findOne({ email });
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
     
     if (!user || !verifyPassword(password, user.password)) {
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
         { status: 401 }
+      );
+    }
+    
+    // Check if user is admin
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { success: false, error: 'Access denied. Admin only.' },
+        { status: 403 }
       );
     }
     
@@ -30,6 +39,7 @@ export async function POST(request) {
       success: true,
       user: {
         email: user.email,
+        name: user.name,
         role: user.role
       }
     });

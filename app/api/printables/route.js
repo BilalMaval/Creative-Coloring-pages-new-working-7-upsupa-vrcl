@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request) {
   try {
@@ -9,23 +9,23 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit') || '12');
     const latest = searchParams.get('latest') === 'true';
     
-    const printables = await getCollection('printables');
-    
-    let query = {};
+    let where = { isActive: true };
     if (category) {
-      query.category_id = category;
+      where.categoryId = category;
     }
     
-    const total = await printables.countDocuments(query);
+    const total = await prisma.product.count({ where });
     const skip = (page - 1) * limit;
     
-    let cursor = printables.find(query).skip(skip).limit(limit);
-    
-    if (latest) {
-      cursor = cursor.sort({ createdAt: -1 });
-    }
-    
-    const items = await cursor.toArray();
+    const items = await prisma.product.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: latest ? { createdAt: 'desc' } : { title: 'asc' },
+      include: {
+        category: true
+      }
+    });
     
     return NextResponse.json({
       success: true,
@@ -51,43 +51,46 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { title, slug, description, tags, image, pdf_url, category_id } = body;
+    const { title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree } = body;
     
-    if (!title || !slug || !category_id) {
+    if (!title || !slug || !categoryId) {
       return NextResponse.json(
         { success: false, error: 'Title, slug, and category are required' },
         { status: 400 }
       );
     }
     
-    const printables = await getCollection('printables');
-    
     // Check if slug exists
-    const existing = await printables.findOne({ slug });
+    const existing = await prisma.product.findUnique({
+      where: { slug }
+    });
+    
     if (existing) {
       return NextResponse.json(
-        { success: false, error: 'Printable with this slug already exists' },
+        { success: false, error: 'Product with this slug already exists' },
         { status: 400 }
       );
     }
     
-    const newPrintable = {
-      title,
-      slug,
-      description: description || '',
-      tags: tags || [],
-      image: image || '',
-      pdf_url: pdf_url || '',
-      category_id,
-      downloads: 0,
-      createdAt: new Date()
-    };
-    
-    const result = await printables.insertOne(newPrintable);
+    const newProduct = await prisma.product.create({
+      data: {
+        title,
+        slug,
+        description: description || '',
+        tags: tags || [],
+        webpPath: webpPath || image || null,
+        pdfPath: pdfPath || null,
+        categoryId,
+        price: price || 0,
+        isFree: isFree !== undefined ? isFree : true,
+        isActive: true,
+        downloads: 0
+      }
+    });
     
     return NextResponse.json({
       success: true,
-      data: { ...newPrintable, _id: result.insertedId }
+      data: newProduct
     });
   } catch (error) {
     console.error('Error creating printable:', error);
@@ -101,34 +104,36 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { _id, title, slug, description, tags, image, pdf_url, category_id } = body;
+    const { id, title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree } = body;
     
-    if (!_id) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Printable ID is required' },
+        { success: false, error: 'Product ID is required' },
         { status: 400 }
       );
     }
     
-    const printables = await getCollection('printables');
-    
     const updateData = {};
-    if (title) updateData.title = title;
-    if (slug) updateData.slug = slug;
+    if (title !== undefined) updateData.title = title;
+    if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (tags !== undefined) updateData.tags = tags;
-    if (image !== undefined) updateData.image = image;
-    if (pdf_url !== undefined) updateData.pdf_url = pdf_url;
-    if (category_id) updateData.category_id = category_id;
+    if (image !== undefined) updateData.webpPath = image;
+    if (webpPath !== undefined) updateData.webpPath = webpPath;
+    if (pdfPath !== undefined) updateData.pdfPath = pdfPath;
+    if (categoryId !== undefined) updateData.categoryId = categoryId;
+    if (price !== undefined) updateData.price = price;
+    if (isFree !== undefined) updateData.isFree = isFree;
     
-    await printables.updateOne(
-      { _id },
-      { $set: updateData }
-    );
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: updateData
+    });
     
     return NextResponse.json({
       success: true,
-      message: 'Printable updated successfully'
+      message: 'Product updated successfully',
+      data: updatedProduct
     });
   } catch (error) {
     console.error('Error updating printable:', error);
@@ -146,17 +151,18 @@ export async function DELETE(request) {
     
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Printable ID is required' },
+        { success: false, error: 'Product ID is required' },
         { status: 400 }
       );
     }
     
-    const printables = await getCollection('printables');
-    await printables.deleteOne({ _id: id });
+    await prisma.product.delete({
+      where: { id }
+    });
     
     return NextResponse.json({
       success: true,
-      message: 'Printable deleted successfully'
+      message: 'Product deleted successfully'
     });
   } catch (error) {
     console.error('Error deleting printable:', error);

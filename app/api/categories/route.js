@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const categories = await getCollection('categories');
-    const allCategories = await categories.find({}).sort({ name: 1 }).toArray();
+    const allCategories = await prisma.category.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        parent: true,
+        children: true,
+        _count: {
+          select: { products: true }
+        }
+      }
+    });
     
     return NextResponse.json({
       success: true,
@@ -22,7 +30,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, slug, description, image } = body;
+    const { name, slug, description, image, parentId } = body;
     
     if (!name || !slug) {
       return NextResponse.json(
@@ -31,10 +39,11 @@ export async function POST(request) {
       );
     }
     
-    const categories = await getCollection('categories');
-    
     // Check if slug exists
-    const existing = await categories.findOne({ slug });
+    const existing = await prisma.category.findUnique({
+      where: { slug }
+    });
+    
     if (existing) {
       return NextResponse.json(
         { success: false, error: 'Category with this slug already exists' },
@@ -42,19 +51,20 @@ export async function POST(request) {
       );
     }
     
-    const newCategory = {
-      name,
-      slug,
-      description: description || '',
-      image: image || '',
-      createdAt: new Date()
-    };
-    
-    const result = await categories.insertOne(newCategory);
+    const newCategory = await prisma.category.create({
+      data: {
+        name,
+        slug,
+        description: description || '',
+        image: image || null,
+        parentId: parentId || null,
+        isActive: true
+      }
+    });
     
     return NextResponse.json({
       success: true,
-      data: { ...newCategory, _id: result.insertedId }
+      data: newCategory
     });
   } catch (error) {
     console.error('Error creating category:', error);
@@ -68,31 +78,31 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { _id, name, slug, description, image } = body;
+    const { id, name, slug, description, image, parentId } = body;
     
-    if (!_id) {
+    if (!id) {
       return NextResponse.json(
         { success: false, error: 'Category ID is required' },
         { status: 400 }
       );
     }
     
-    const categories = await getCollection('categories');
-    
     const updateData = {};
-    if (name) updateData.name = name;
-    if (slug) updateData.slug = slug;
+    if (name !== undefined) updateData.name = name;
+    if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (image !== undefined) updateData.image = image;
+    if (parentId !== undefined) updateData.parentId = parentId;
     
-    await categories.updateOne(
-      { _id },
-      { $set: updateData }
-    );
+    const updatedCategory = await prisma.category.update({
+      where: { id },
+      data: updateData
+    });
     
     return NextResponse.json({
       success: true,
-      message: 'Category updated successfully'
+      message: 'Category updated successfully',
+      data: updatedCategory
     });
   } catch (error) {
     console.error('Error updating category:', error);
@@ -115,8 +125,21 @@ export async function DELETE(request) {
       );
     }
     
-    const categories = await getCollection('categories');
-    await categories.deleteOne({ _id: id });
+    // Check if category has products
+    const productsCount = await prisma.product.count({
+      where: { categoryId: id }
+    });
+    
+    if (productsCount > 0) {
+      return NextResponse.json(
+        { success: false, error: `Cannot delete category with ${productsCount} products. Please move or delete the products first.` },
+        { status: 400 }
+      );
+    }
+    
+    await prisma.category.delete({
+      where: { id }
+    });
     
     return NextResponse.json({
       success: true,

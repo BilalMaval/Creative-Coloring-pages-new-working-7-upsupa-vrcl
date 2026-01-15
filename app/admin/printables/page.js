@@ -24,8 +24,8 @@ export default function AdminPrintablesPage() {
     description: '',
     tags: '',
     image: '',
-    pdf_url: '',
-    category_id: ''
+    pdfPath: '',
+    categoryId: ''
   });
 
   useEffect(() => {
@@ -43,7 +43,11 @@ export default function AdminPrintablesPage() {
       const categoriesData = await categoriesRes.json();
 
       if (printablesData.success) setPrintables(printablesData.data);
-      if (categoriesData.success) setCategories(categoriesData.data);
+      if (categoriesData.success) {
+        // Filter to show only child categories (not main collections)
+        const childCategories = categoriesData.data.filter(cat => cat.parentId !== null);
+        setCategories(childCategories);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -78,7 +82,7 @@ export default function AdminPrintablesPage() {
       if (data.success) {
         setFormData(prev => ({
           ...prev,
-          [type === 'image' ? 'image' : 'pdf_url']: data.url
+          [type === 'image' ? 'image' : 'pdfPath']: data.url
         }));
       } else {
         alert(data.error || 'Upload failed');
@@ -98,7 +102,7 @@ export default function AdminPrintablesPage() {
       const method = editingPrintable ? 'PUT' : 'POST';
       const tags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       const body = editingPrintable 
-        ? { ...formData, tags, _id: editingPrintable._id }
+        ? { ...formData, tags, id: editingPrintable.id }
         : { ...formData, tags };
 
       const res = await fetch(url, {
@@ -117,8 +121,8 @@ export default function AdminPrintablesPage() {
           description: '',
           tags: '',
           image: '',
-          pdf_url: '',
-          category_id: ''
+          pdfPath: '',
+          categoryId: ''
         });
         fetchData();
       } else {
@@ -136,9 +140,9 @@ export default function AdminPrintablesPage() {
       slug: printable.slug,
       description: printable.description || '',
       tags: Array.isArray(printable.tags) ? printable.tags.join(', ') : '',
-      image: printable.image || '',
-      pdf_url: printable.pdf_url || '',
-      category_id: printable.category_id
+      image: printable.webpPath || '',
+      pdfPath: printable.pdfPath || '',
+      categoryId: printable.categoryId
     });
     setDialogOpen(true);
   };
@@ -165,8 +169,8 @@ export default function AdminPrintablesPage() {
       description: '',
       tags: '',
       image: '',
-      pdf_url: '',
-      category_id: categories[0]?._id || ''
+      pdfPath: '',
+      categoryId: categories[0]?.id || ''
     });
     setDialogOpen(true);
   };
@@ -215,8 +219,8 @@ export default function AdminPrintablesPage() {
               <div>
                 <Label htmlFor="category">Category *</Label>
                 <Select
-                  value={formData.category_id}
-                  onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+                  value={formData.categoryId}
+                  onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
                   required
                 >
                   <SelectTrigger>
@@ -224,7 +228,7 @@ export default function AdminPrintablesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat._id} value={cat._id}>
+                      <SelectItem key={cat.id} value={cat.id}>
                         {cat.name}
                       </SelectItem>
                     ))}
@@ -279,14 +283,14 @@ export default function AdminPrintablesPage() {
                   onChange={(e) => handleFileUpload(e, 'pdf')}
                   disabled={uploading.pdf}
                 />
-                {formData.pdf_url && (
+                {formData.pdfPath && (
                   <p className="text-sm text-green-600 mt-2">✓ PDF uploaded</p>
                 )}
                 {uploading.pdf && <p className="text-sm text-muted-foreground mt-2">Uploading PDF...</p>}
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={!formData.image || !formData.pdf_url}>
+                <Button type="submit" className="flex-1" disabled={!formData.image || !formData.pdfPath}>
                   {editingPrintable ? 'Update' : 'Create'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -315,13 +319,13 @@ export default function AdminPrintablesPage() {
       ) : printables.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {printables.map((printable) => {
-            const category = categories.find(c => c._id === printable.category_id);
+            const category = categories.find(c => c.id === printable.categoryId);
             return (
-              <Card key={printable._id}>
+              <Card key={printable.id}>
                 <CardHeader>
-                  {printable.image && (
+                  {printable.webpPath && (
                     <div className="mb-2 aspect-[3/4] relative rounded overflow-hidden bg-muted">
-                      <img src={printable.image} alt={printable.title} className="object-cover w-full h-full" />
+                      <img src={printable.webpPath} alt={printable.title} className="object-cover w-full h-full" />
                     </div>
                   )}
                   <CardTitle className="line-clamp-1">{printable.title}</CardTitle>
@@ -341,7 +345,7 @@ export default function AdminPrintablesPage() {
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(printable._id)}>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(printable.id)}>
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </Button>
