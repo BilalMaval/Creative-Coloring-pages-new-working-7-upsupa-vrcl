@@ -1,8 +1,14 @@
 // Updated seed script with proper hierarchy
 // Collections > Categories > Subcategories
 const { PrismaClient } = require('@prisma/client');
+const crypto = require('crypto');
 
 const prisma = new PrismaClient();
+
+// Hash password function (same as in lib/auth.js)
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 const collectionsData = [
   // COLLECTION 1: COLORING PAGES
