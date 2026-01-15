@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Menu, X, Sparkles } from 'lucide-react';
+import { Menu, X, Sparkles, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Header() {
@@ -34,24 +34,34 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-3">
-            <Link href="/">
+            <Link href="/category/coloring-pages">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
-                🏠 Home
+                🎨 Coloring Pages
+              </Button>
+            </Link>
+            <Link href="/category/calendars">
+              <Button className="bg-green-500 hover:bg-green-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
+                📅 Calendars
+              </Button>
+            </Link>
+            <Link href="/category/printables">
+              <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
+                📄 Printables
+              </Button>
+            </Link>
+            <Link href="/ebooks">
+              <Button className="bg-purple-500 hover:bg-purple-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
+                📚 Book Shop
               </Button>
             </Link>
             <Link href="/search">
-              <Button className="bg-purple-500 hover:bg-purple-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
-                🔍 Browse
-              </Button>
-            </Link>
-            <Link href="/about">
               <Button className="bg-pink-500 hover:bg-pink-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
-                ❓ About
+                🔍 Search
               </Button>
             </Link>
-            <Link href="/contact">
-              <Button className="bg-green-500 hover:bg-green-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
-                ✉️ Contact
+            <Link href="/cart">
+              <Button variant="outline" className="bg-white hover:bg-gray-100 font-bold text-base rounded-full h-11 px-4 shadow-md border-2 border-gray-300">
+                <ShoppingCart className="h-5 w-5" />
               </Button>
             </Link>
           </nav>
@@ -73,12 +83,39 @@ export default function Header() {
         {mobileMenuOpen && (
           <nav className="md:hidden py-4 space-y-3 pb-6">
             <Link
-              href="/"
+              href="/category/coloring-pages"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
-                🏠 Home
+                🎨 Coloring Pages
+              </Button>
+            </Link>
+            <Link
+              href="/category/calendars"
+              className="block"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                📅 Calendars
+              </Button>
+            </Link>
+            <Link
+              href="/category/printables"
+              className="block"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                📄 Printables
+              </Button>
+            </Link>
+            <Link
+              href="/ebooks"
+              className="block"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                📚 Book Shop
               </Button>
             </Link>
             <Link
@@ -86,8 +123,8 @@ export default function Header() {
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
-                🔍 Browse All Pages
+              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                🔍 Search
               </Button>
             </Link>
             <Link
@@ -95,17 +132,17 @@ export default function Header() {
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
-                ❓ About Us
+              <Button className="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                ❓ About
               </Button>
             </Link>
             <Link
-              href="/contact"
+              href="/cart"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <Button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold text-lg rounded-full h-14 shadow-md">
-                ✉️ Contact Us
+              <Button className="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold text-lg rounded-full h-14 shadow-md border-2 border-gray-300">
+                🛒 Cart
               </Button>
             </Link>
           </nav>
