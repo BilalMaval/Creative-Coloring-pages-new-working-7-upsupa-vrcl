@@ -5,19 +5,19 @@ import PrintableCard from '@/components/PrintableCard';
 import SearchBar from '@/components/SearchBar';
 import { getCollection, initializeDatabase } from '@/lib/db';
 import { ensureAdminUser } from '@/lib/auth';
+import { Sparkles, Star, Heart, Smile } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 async function getHomeData() {
   try {
-    // Initialize database and admin user
     await initializeDatabase();
     await ensureAdminUser();
     
     const categories = await getCollection('categories');
     const printables = await getCollection('printables');
     
-    const featuredCategories = await categories.find({}).limit(6).toArray();
+    const featuredCategories = await categories.find({}).limit(12).toArray();
     const latestPrintables = await printables.find({}).sort({ createdAt: -1 }).limit(8).toArray();
     
     return {
@@ -34,119 +34,4 @@ export default async function Home() {
   const { categories, printables } = await getHomeData();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <section className="text-center py-12 md:py-20">
-        <h1 className="text-4xl md:text-6xl font-bold mb-6">
-          Free Printable Coloring Pages & Mandalas
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Discover thousands of beautiful coloring pages and mandala designs. Perfect for kids and adults. Download, print, and start coloring today - completely free!
-        </p>
-        <div className="flex justify-center">
-          <SearchBar />
-        </div>
-      </section>
-
-      {/* SEO Content */}
-      <section className="max-w-4xl mx-auto mb-12 prose prose-slate dark:prose-invert">
-        <h2 className="text-2xl font-bold mb-4">Welcome to Your Free Printable Coloring Page Resource</h2>
-        <p className="text-muted-foreground">
-          Welcome to the ultimate destination for free printable coloring pages and mandala designs! Whether you're looking for coloring sheets for kids, intricate adult coloring pages, or beautiful mandala patterns, we have thousands of high-quality printables ready for instant download. All our coloring pages are completely free, and you can print as many copies as you need.
-        </p>
-        <p className="text-muted-foreground">
-          Our collection includes a wide variety of themes and difficulty levels. From simple coloring pages perfect for toddlers and preschoolers to complex mandala designs for adults seeking stress relief and creative expression. Each printable coloring page is carefully curated and optimized for printing, ensuring you get the best results every time.
-        </p>
-        <p className="text-muted-foreground">
-          Coloring has been proven to reduce stress, improve focus, and boost creativity. Whether you're a teacher looking for classroom resources, a parent seeking fun activities for your children, or an adult looking for a relaxing hobby, our free printable coloring pages offer something for everyone. New designs are added regularly, so check back often for fresh content!
-        </p>
-      </section>
-
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <section className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold">Browse Categories</h2>
-            <Link href="/search">
-              <Button variant="outline">View All</Button>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category) => (
-              <CategoryCard key={category._id} category={category} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Latest Printables */}
-      {printables.length > 0 && (
-        <section className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold">Latest Printables</h2>
-            <Link href="/search">
-              <Button variant="outline">View All</Button>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {printables.map((printable) => (
-              <PrintableCard key={printable._id} printable={printable} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Empty State */}
-      {categories.length === 0 && printables.length === 0 && (
-        <section className="text-center py-20">
-          <h2 className="text-2xl font-bold mb-4">No Content Yet</h2>
-          <p className="text-muted-foreground mb-6">
-            The site is ready! Please log in to the admin panel to add categories and printables.
-          </p>
-          <Link href="/admin/login">
-            <Button>Go to Admin Panel</Button>
-          </Link>
-          <div className="mt-4 text-sm text-muted-foreground">
-            <p>Default credentials:</p>
-            <p className="font-mono">Email: admin@printables.com</p>
-            <p className="font-mono">Password: admin123</p>
-          </div>
-        </section>
-      )}
-
-      {/* Features Section */}
-      <section className="bg-muted rounded-lg p-8 md:p-12">
-        <h2 className="text-3xl font-bold mb-8 text-center">Why Choose Our Printable Coloring Pages?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🎨</span>
-            </div>
-            <h3 className="font-semibold mb-2">High Quality Designs</h3>
-            <p className="text-sm text-muted-foreground">
-              Every coloring page is carefully designed and optimized for perfect printing results
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">✨</span>
-            </div>
-            <h3 className="font-semibold mb-2">Completely Free</h3>
-            <p className="text-sm text-muted-foreground">
-              All our coloring pages are 100% free. No subscriptions, no hidden fees, unlimited downloads
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📱</span>
-            </div>
-            <h3 className="font-semibold mb-2">Easy to Use</h3>
-            <p className="text-sm text-muted-foreground">
-              Simple one-click download. Print from any device and start coloring immediately
-            </p>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
+    <div className=\"bg-gradient-to-b from-kid-yellow/20 via-white to-kid-blue/20\">\n      {/* Hero Section */}\n      <section className=\"container mx-auto px-4 py-12 md:py-20\">\n        <div className=\"text-center space-y-6\">\n          <div className=\"flex justify-center items-center gap-4 flex-wrap\">\n            <Sparkles className=\"h-12 w-12 text-kid-yellow animate-pulse\" />\n            <h1 className=\"text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-kid-blue via-kid-pink to-kid-purple\">\n              Creative Coloring Pages\n            </h1>\n            <Star className=\"h-12 w-12 text-kid-pink animate-pulse\" />\n          </div>\n          \n          <div className=\"inline-block bg-gradient-to-r from-kid-green to-kid-blue text-white font-black text-2xl md:text-4xl py-4 px-8 rounded-3xl shadow-2xl border-4 border-white transform hover:scale-105 transition-transform\">\n            \ud83c\udfa8 100% FREE Coloring Pages! \ud83c\udf08\n          </div>\n          \n          <p className=\"text-xl md:text-2xl font-bold text-gray-700 max-w-3xl mx-auto leading-relaxed\">\n            \ud83d\udc76 Perfect for kids and families! \ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66\n            <br />\n            Download, print, and color amazing pages!\n          </p>\n          \n          <div className=\"flex justify-center pt-4\">\n            <SearchBar />\n          </div>\n          \n          <div className=\"flex flex-wrap justify-center gap-4 pt-6\">\n            <div className=\"bg-kid-blue text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \u2728 {categories.length}+ Categories\n            </div>\n            <div className=\"bg-kid-pink text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \ud83d\udda8\ufe0f {printables.length}+ Free Pages\n            </div>\n            <div className=\"bg-kid-green text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \ud83d\udcf1 Easy to Print!\n            </div>\n          </div>\n        </div>\n      </section>\n\n      {/* Categories Section */}\n      {categories.length > 0 && (\n        <section className=\"container mx-auto px-4 mb-16\">\n          <div className=\"bg-gradient-to-r from-kid-purple to-kid-pink rounded-3xl p-8 shadow-2xl border-4 border-kid-yellow mb-8\">\n            <div className=\"flex items-center justify-center gap-3 mb-6\">\n              <Star className=\"h-8 w-8 text-kid-yellow\" />\n              <h2 className=\"text-4xl md:text-5xl font-black text-white text-center\">\n                Choose Your Favorite!\n              </h2>\n              <Heart className=\"h-8 w-8 text-kid-yellow\" />\n            </div>\n            <p className=\"text-center text-white font-bold text-xl\">\n              \ud83c\udf08 Click any category to start coloring! \ud83d\udd8d\ufe0f\n            </p>\n          </div>\n          \n          <div className=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6\">\n            {categories.map((category, index) => {\n              const colors = ['kid-blue', 'kid-pink', 'kid-green', 'kid-purple', 'kid-orange', 'kid-yellow'];\n              const borderColor = colors[index % colors.length];\n              return (\n                <div key={category._id} className={`border-4 border-${borderColor} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 bg-white`}>\n                  <CategoryCard category={category} />\n                </div>\n              );\n            })}\n          </div>\n          \n          <div className=\"text-center mt-8\">\n            <Link href=\"/search\">\n              <Button className=\"bg-gradient-to-r from-kid-blue to-kid-purple text-white font-black text-2xl py-8 px-12 rounded-3xl shadow-2xl border-4 border-kid-yellow hover:from-kid-pink hover:to-kid-orange transform hover:scale-110 transition-all\">\n                \ud83d\udd0d See All Categories! \u2728\n              </Button>\n            </Link>\n          </div>\n        </section>\n      )}\n\n      {/* Latest Printables */}\n      {printables.length > 0 && (\n        <section className=\"container mx-auto px-4 mb-16\">\n          <div className=\"bg-gradient-to-r from-kid-green to-kid-blue rounded-3xl p-8 shadow-2xl border-4 border-kid-yellow mb-8\">\n            <div className=\"flex items-center justify-center gap-3 mb-4\">\n              <Sparkles className=\"h-8 w-8 text-kid-yellow animate-pulse\" />\n              <h2 className=\"text-4xl md:text-5xl font-black text-white text-center\">\n                New Coloring Pages!\n              </h2>\n              <Smile className=\"h-8 w-8 text-kid-yellow\" />\n            </div>\n            <p className=\"text-center text-white font-bold text-xl\">\n              \ud83c\udf86 Fresh pages added just for you! \ud83c\udf89\n            </p>\n          </div>\n          \n          <div className=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6\">\n            {printables.map((printable, index) => {\n              const colors = ['kid-pink', 'kid-blue', 'kid-green', 'kid-purple', 'kid-orange', 'kid-yellow'];\n              const borderColor = colors[index % colors.length];\n              return (\n                <div key={printable._id} className={`border-4 border-${borderColor} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 bg-white`}>\n                  <PrintableCard printable={printable} />\n                </div>\n              );\n            })}\n          </div>\n          \n          <div className=\"text-center mt-8\">\n            <Link href=\"/search\">\n              <Button className=\"bg-gradient-to-r from-kid-pink to-kid-purple text-white font-black text-2xl py-8 px-12 rounded-3xl shadow-2xl border-4 border-kid-yellow hover:from-kid-orange hover:to-kid-blue transform hover:scale-110 transition-all\">\n                \ud83d\udda8\ufe0f Browse All Pages! \ud83c\udf08\n              </Button>\n            </Link>\n          </div>\n        </section>\n      )}\n\n      {/* Empty State */}\n      {categories.length === 0 && printables.length === 0 && (\n        <section className=\"container mx-auto px-4 py-20\">\n          <div className=\"bg-gradient-to-r from-kid-yellow to-kid-orange rounded-3xl p-12 shadow-2xl border-4 border-kid-blue text-center\">\n            <Sparkles className=\"h-24 w-24 text-white mx-auto mb-6 animate-pulse\" />\n            <h2 className=\"text-4xl font-black text-white mb-4\">\n              \ud83c\udfa8 Coming Soon!\n            </h2>\n            <p className=\"text-white font-bold text-xl mb-8\">\n              We're adding amazing coloring pages for you!\n              <br />\n              Check back soon! \u2728\n            </p>\n            <Link href=\"/admin/login\">\n              <Button className=\"bg-white text-kid-blue font-black text-xl py-6 px-10 rounded-2xl shadow-xl hover:bg-kid-yellow hover:text-white transform hover:scale-110 transition-all\">\n                \ud83d\udd11 Admin Panel\n              </Button>\n            </Link>\n            <div className=\"mt-6 bg-white rounded-2xl p-4 inline-block\">\n              <p className=\"text-kid-blue font-bold\">Default Login:</p>\n              <p className=\"text-gray-700 font-mono text-sm\">admin@printables.com</p>\n              <p className=\"text-gray-700 font-mono text-sm\">admin123</p>\n            </div>\n          </div>\n        </section>\n      )}\n\n      {/* Features Section */}\n      <section className=\"container mx-auto px-4 pb-16\">\n        <div className=\"bg-white rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-kid-pink\">\n          <h2 className=\"text-4xl md:text-5xl font-black text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-kid-blue to-kid-pink\">\n            Why Kids \u2764\ufe0f CCP!\n          </h2>\n          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n            <div className=\"text-center bg-gradient-to-br from-kid-blue to-kid-purple rounded-3xl p-8 border-4 border-kid-yellow shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\ud83c\udfa8</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Super Fun!</h3>\n              <p className=\"text-white font-bold\">\n                Thousands of cool coloring pages that kids love!\n              </p>\n            </div>\n            <div className=\"text-center bg-gradient-to-br from-kid-pink to-kid-orange rounded-3xl p-8 border-4 border-kid-blue shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\u2728</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Always Free!</h3>\n              <p className=\"text-white font-bold\">\n                Download and print as many times as you want - FREE!\n              </p>\n            </div>\n            <div className=\"text-center bg-gradient-to-br from-kid-green to-kid-blue rounded-3xl p-8 border-4 border-kid-pink shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\ud83d\udcf1</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Easy Peasy!</h3>\n              <p className=\"text-white font-bold\">\n                One click to download, print, and start coloring!\n              </p>\n            </div>\n          </div>\n        </div>\n      </section>\n    </div>\n  );\n}
