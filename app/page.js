@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic';
 
 async function getHomeData() {
   try {
-    // Get 3 main categories (parent categories only)
-    const mainCategories = await prisma.category.findMany({
+    // Get 3 main collections (Coloring Pages, Calendars, Printables)
+    const collections = await prisma.category.findMany({
       where: {
         parentId: null,
         isActive: true
@@ -21,12 +21,12 @@ async function getHomeData() {
       take: 3
     });
 
-    // Get subcategories for each main category
-    const categoriesWithSubs = await Promise.all(
-      mainCategories.map(async (mainCat) => {
-        const subcategories = await prisma.category.findMany({
+    // Get categories for each collection
+    const collectionsWithCategories = await Promise.all(
+      collections.map(async (collection) => {
+        const categories = await prisma.category.findMany({
           where: {
-            parentId: mainCat.id,
+            parentId: collection.id,
             isActive: true
           },
           orderBy: {
@@ -36,8 +36,8 @@ async function getHomeData() {
         });
         
         return {
-          ...mainCat,
-          subcategories
+          ...collection,
+          categories
         };
       })
     );
@@ -48,17 +48,17 @@ async function getHomeData() {
     });
 
     return {
-      mainCategories: JSON.parse(JSON.stringify(categoriesWithSubs)),
+      collections: JSON.parse(JSON.stringify(collectionsWithCategories)),
       productCount
     };
   } catch (error) {
     console.error('Error fetching home data:', error);
-    return { mainCategories: [], productCount: 0 };
+    return { collections: [], productCount: 0 };
   }
 }
 
 export default async function Home() {
-  const { mainCategories, productCount } = await getHomeData();
+  const { collections, productCount } = await getHomeData();
 
   return (
     <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
@@ -102,7 +102,7 @@ export default async function Home() {
           <div className="flex flex-wrap justify-center gap-4 pt-6">
             <div className="bg-white border-4 border-blue-400 text-blue-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <Star className="inline-block mr-2 h-5 w-5" />
-              {mainCategories.length * 12}+ Categories
+              {collections.length * 12}+ Collections
             </div>
             <div className="bg-white border-4 border-pink-400 text-pink-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <Palette className="inline-block mr-2 h-5 w-5" />
@@ -116,19 +116,19 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 3 SUPER MAIN CATEGORIES */}
+      {/* 3 MAIN COLLECTIONS */}
       <section className="container mx-auto px-4 mb-16">
         <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-3xl p-8 shadow-2xl mb-8">
           <h2 className="text-3xl md:text-5xl font-black text-white text-center mb-2">
             🎨 Choose Your Collection! 🌈
           </h2>
           <p className="text-center text-white font-bold text-lg md:text-xl">
-            Click on any category to explore amazing content!
+            Click on any collection to explore amazing content!
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {mainCategories.map((mainCat, index) => {
+          {collections.map((collection, index) => {
             const gradients = [
               'from-blue-500 to-purple-600',
               'from-green-500 to-teal-600', 
@@ -137,18 +137,18 @@ export default async function Home() {
             const emojis = ['🎨', '📅', '📄'];
             
             return (
-              <Link key={mainCat.id} href={`/category/${mainCat.slug}`}>
+              <Link key={collection.id} href={`/collection/${collection.slug}`}>
                 <div className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-8 shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-white`}>
                   <div className="text-center space-y-4">
                     <div className="text-8xl mb-4">{emojis[index]}</div>
                     <h3 className="text-3xl md:text-4xl font-black text-white">
-                      {mainCat.name}
+                      {collection.name}
                     </h3>
                     <p className="text-white font-bold text-lg">
-                      {mainCat.description}
+                      {collection.description}
                     </p>
                     <div className="bg-white text-gray-800 font-black py-3 px-6 rounded-full inline-block">
-                      {mainCat.subcategories?.length || 0} Categories Inside!
+                      {collection.categories?.length || 0} Categories Inside!
                     </div>
                   </div>
                 </div>
@@ -158,14 +158,14 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* SECTION 1: COLORING PAGES SUBCATEGORIES */}
-      {mainCategories[0] && mainCategories[0].subcategories && (
+      {/* COLLECTION 1: COLORING PAGES CATEGORIES */}
+      {collections[0] && collections[0].categories && (
         <section className="container mx-auto px-4 mb-16">
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
               <h2 className="text-3xl md:text-5xl font-black text-white text-center">
-                {mainCategories[0].name}
+                {collections[0].name} Categories
               </h2>
               <Heart className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
@@ -175,18 +175,18 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
-            {mainCategories[0].subcategories.map((subCat, idx) => {
+            {collections[0].categories.map((category, idx) => {
               const colors = ['blue', 'pink', 'green', 'purple', 'orange', 'yellow'];
               const color = colors[idx % colors.length];
               
               return (
-                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                <Link key={category.id} href={`/category/${category.slug}`}>
                   <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
                     <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
                       <span className="text-5xl">{['🐾', '👑', '🎮', '📺', '🦄', '🎄', '📚', '🌸', '🌳', '🚗', '⚽', '🍦'][idx]}</span>
                     </div>
                     <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
-                      {subCat.name}
+                      {category.name}
                     </h3>
                   </div>
                 </Link>
@@ -196,14 +196,14 @@ export default async function Home() {
         </section>
       )}
 
-      {/* SECTION 2: CALENDARS SUBCATEGORIES */}
-      {mainCategories[1] && mainCategories[1].subcategories && (
+      {/* COLLECTION 2: CALENDARS CATEGORIES */}
+      {collections[1] && collections[1].categories && (
         <section className="container mx-auto px-4 mb-16">
           <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
               <h2 className="text-3xl md:text-5xl font-black text-white text-center">
-                {mainCategories[1].name}
+                {collections[1].name} Categories
               </h2>
               <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
@@ -213,18 +213,18 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
-            {mainCategories[1].subcategories.map((subCat, idx) => {
+            {collections[1].categories.map((category, idx) => {
               const colors = ['green', 'teal', 'blue', 'indigo', 'purple', 'pink'];
               const color = colors[idx % colors.length];
               
               return (
-                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                <Link key={category.id} href={`/category/${category.slug}`}>
                   <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
                     <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
                       <span className="text-5xl">{['📅', '📆', '📋', '📝', '🎓', '🎂', '🍽️', '✅', '🎯', '💪', '💰', '📄'][idx]}</span>
                     </div>
                     <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
-                      {subCat.name}
+                      {category.name}
                     </h3>
                   </div>
                 </Link>
@@ -234,14 +234,14 @@ export default async function Home() {
         </section>
       )}
 
-      {/* SECTION 3: PRINTABLES SUBCATEGORIES */}
-      {mainCategories[2] && mainCategories[2].subcategories && (
+      {/* COLLECTION 3: PRINTABLES CATEGORIES */}
+      {collections[2] && collections[2].categories && (
         <section className="container mx-auto px-4 mb-16">
           <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <Smile className="h-8 w-8 text-yellow-300 animate-pulse" />
               <h2 className="text-3xl md:text-5xl font-black text-white text-center">
-                {mainCategories[2].name}
+                {collections[2].name} Categories
               </h2>
               <Smile className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
@@ -251,18 +251,18 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
-            {mainCategories[2].subcategories.map((subCat, idx) => {
+            {collections[2].categories.map((category, idx) => {
               const colors = ['orange', 'red', 'pink', 'purple', 'blue', 'green'];
               const color = colors[idx % colors.length];
               
               return (
-                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                <Link key={category.id} href={`/category/${category.slug}`}>
                   <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
                     <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
                       <span className="text-5xl">{['📝', '🃏', '🏆', '💌', '🏷️', '🎉', '🏷️', '🔖', '🖼️', '✓', '🎈', '🎲'][idx]}</span>
                     </div>
                     <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
-                      {subCat.name}
+                      {category.name}
                     </h3>
                   </div>
                 </Link>
