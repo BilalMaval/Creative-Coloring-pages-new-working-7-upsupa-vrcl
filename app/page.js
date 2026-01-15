@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import CategoryCard from '@/components/CategoryCard';
 import PrintableCard from '@/components/PrintableCard';
 import SearchBar from '@/components/SearchBar';
 import { getCollection, initializeDatabase } from '@/lib/db';
 import { ensureAdminUser } from '@/lib/auth';
-import { Sparkles, Star, Heart, Smile } from 'lucide-react';
+import { Sparkles, Star, Heart, Smile, Download, Palette } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,4 +35,187 @@ export default async function Home() {
   const { categories, printables } = await getHomeData();
 
   return (
-    <div className=\"bg-gradient-to-b from-kid-yellow/20 via-white to-kid-blue/20\">\n      {/* Hero Section */}\n      <section className=\"container mx-auto px-4 py-12 md:py-20\">\n        <div className=\"text-center space-y-6\">\n          <div className=\"flex justify-center items-center gap-4 flex-wrap\">\n            <Sparkles className=\"h-12 w-12 text-kid-yellow animate-pulse\" />\n            <h1 className=\"text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-kid-blue via-kid-pink to-kid-purple\">\n              Creative Coloring Pages\n            </h1>\n            <Star className=\"h-12 w-12 text-kid-pink animate-pulse\" />\n          </div>\n          \n          <div className=\"inline-block bg-gradient-to-r from-kid-green to-kid-blue text-white font-black text-2xl md:text-4xl py-4 px-8 rounded-3xl shadow-2xl border-4 border-white transform hover:scale-105 transition-transform\">\n            \ud83c\udfa8 100% FREE Coloring Pages! \ud83c\udf08\n          </div>\n          \n          <p className=\"text-xl md:text-2xl font-bold text-gray-700 max-w-3xl mx-auto leading-relaxed\">\n            \ud83d\udc76 Perfect for kids and families! \ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67\u200d\ud83d\udc66\n            <br />\n            Download, print, and color amazing pages!\n          </p>\n          \n          <div className=\"flex justify-center pt-4\">\n            <SearchBar />\n          </div>\n          \n          <div className=\"flex flex-wrap justify-center gap-4 pt-6\">\n            <div className=\"bg-kid-blue text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \u2728 {categories.length}+ Categories\n            </div>\n            <div className=\"bg-kid-pink text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \ud83d\udda8\ufe0f {printables.length}+ Free Pages\n            </div>\n            <div className=\"bg-kid-green text-white font-bold py-3 px-6 rounded-2xl shadow-lg border-4 border-kid-yellow\">\n              \ud83d\udcf1 Easy to Print!\n            </div>\n          </div>\n        </div>\n      </section>\n\n      {/* Categories Section */}\n      {categories.length > 0 && (\n        <section className=\"container mx-auto px-4 mb-16\">\n          <div className=\"bg-gradient-to-r from-kid-purple to-kid-pink rounded-3xl p-8 shadow-2xl border-4 border-kid-yellow mb-8\">\n            <div className=\"flex items-center justify-center gap-3 mb-6\">\n              <Star className=\"h-8 w-8 text-kid-yellow\" />\n              <h2 className=\"text-4xl md:text-5xl font-black text-white text-center\">\n                Choose Your Favorite!\n              </h2>\n              <Heart className=\"h-8 w-8 text-kid-yellow\" />\n            </div>\n            <p className=\"text-center text-white font-bold text-xl\">\n              \ud83c\udf08 Click any category to start coloring! \ud83d\udd8d\ufe0f\n            </p>\n          </div>\n          \n          <div className=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6\">\n            {categories.map((category, index) => {\n              const colors = ['kid-blue', 'kid-pink', 'kid-green', 'kid-purple', 'kid-orange', 'kid-yellow'];\n              const borderColor = colors[index % colors.length];\n              return (\n                <div key={category._id} className={`border-4 border-${borderColor} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 bg-white`}>\n                  <CategoryCard category={category} />\n                </div>\n              );\n            })}\n          </div>\n          \n          <div className=\"text-center mt-8\">\n            <Link href=\"/search\">\n              <Button className=\"bg-gradient-to-r from-kid-blue to-kid-purple text-white font-black text-2xl py-8 px-12 rounded-3xl shadow-2xl border-4 border-kid-yellow hover:from-kid-pink hover:to-kid-orange transform hover:scale-110 transition-all\">\n                \ud83d\udd0d See All Categories! \u2728\n              </Button>\n            </Link>\n          </div>\n        </section>\n      )}\n\n      {/* Latest Printables */}\n      {printables.length > 0 && (\n        <section className=\"container mx-auto px-4 mb-16\">\n          <div className=\"bg-gradient-to-r from-kid-green to-kid-blue rounded-3xl p-8 shadow-2xl border-4 border-kid-yellow mb-8\">\n            <div className=\"flex items-center justify-center gap-3 mb-4\">\n              <Sparkles className=\"h-8 w-8 text-kid-yellow animate-pulse\" />\n              <h2 className=\"text-4xl md:text-5xl font-black text-white text-center\">\n                New Coloring Pages!\n              </h2>\n              <Smile className=\"h-8 w-8 text-kid-yellow\" />\n            </div>\n            <p className=\"text-center text-white font-bold text-xl\">\n              \ud83c\udf86 Fresh pages added just for you! \ud83c\udf89\n            </p>\n          </div>\n          \n          <div className=\"grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6\">\n            {printables.map((printable, index) => {\n              const colors = ['kid-pink', 'kid-blue', 'kid-green', 'kid-purple', 'kid-orange', 'kid-yellow'];\n              const borderColor = colors[index % colors.length];\n              return (\n                <div key={printable._id} className={`border-4 border-${borderColor} rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 bg-white`}>\n                  <PrintableCard printable={printable} />\n                </div>\n              );\n            })}\n          </div>\n          \n          <div className=\"text-center mt-8\">\n            <Link href=\"/search\">\n              <Button className=\"bg-gradient-to-r from-kid-pink to-kid-purple text-white font-black text-2xl py-8 px-12 rounded-3xl shadow-2xl border-4 border-kid-yellow hover:from-kid-orange hover:to-kid-blue transform hover:scale-110 transition-all\">\n                \ud83d\udda8\ufe0f Browse All Pages! \ud83c\udf08\n              </Button>\n            </Link>\n          </div>\n        </section>\n      )}\n\n      {/* Empty State */}\n      {categories.length === 0 && printables.length === 0 && (\n        <section className=\"container mx-auto px-4 py-20\">\n          <div className=\"bg-gradient-to-r from-kid-yellow to-kid-orange rounded-3xl p-12 shadow-2xl border-4 border-kid-blue text-center\">\n            <Sparkles className=\"h-24 w-24 text-white mx-auto mb-6 animate-pulse\" />\n            <h2 className=\"text-4xl font-black text-white mb-4\">\n              \ud83c\udfa8 Coming Soon!\n            </h2>\n            <p className=\"text-white font-bold text-xl mb-8\">\n              We're adding amazing coloring pages for you!\n              <br />\n              Check back soon! \u2728\n            </p>\n            <Link href=\"/admin/login\">\n              <Button className=\"bg-white text-kid-blue font-black text-xl py-6 px-10 rounded-2xl shadow-xl hover:bg-kid-yellow hover:text-white transform hover:scale-110 transition-all\">\n                \ud83d\udd11 Admin Panel\n              </Button>\n            </Link>\n            <div className=\"mt-6 bg-white rounded-2xl p-4 inline-block\">\n              <p className=\"text-kid-blue font-bold\">Default Login:</p>\n              <p className=\"text-gray-700 font-mono text-sm\">admin@printables.com</p>\n              <p className=\"text-gray-700 font-mono text-sm\">admin123</p>\n            </div>\n          </div>\n        </section>\n      )}\n\n      {/* Features Section */}\n      <section className=\"container mx-auto px-4 pb-16\">\n        <div className=\"bg-white rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-kid-pink\">\n          <h2 className=\"text-4xl md:text-5xl font-black text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-kid-blue to-kid-pink\">\n            Why Kids \u2764\ufe0f CCP!\n          </h2>\n          <div className=\"grid grid-cols-1 md:grid-cols-3 gap-8\">\n            <div className=\"text-center bg-gradient-to-br from-kid-blue to-kid-purple rounded-3xl p-8 border-4 border-kid-yellow shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\ud83c\udfa8</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Super Fun!</h3>\n              <p className=\"text-white font-bold\">\n                Thousands of cool coloring pages that kids love!\n              </p>\n            </div>\n            <div className=\"text-center bg-gradient-to-br from-kid-pink to-kid-orange rounded-3xl p-8 border-4 border-kid-blue shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\u2728</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Always Free!</h3>\n              <p className=\"text-white font-bold\">\n                Download and print as many times as you want - FREE!\n              </p>\n            </div>\n            <div className=\"text-center bg-gradient-to-br from-kid-green to-kid-blue rounded-3xl p-8 border-4 border-kid-pink shadow-xl transform hover:scale-105 transition-transform\">\n              <div className=\"text-6xl mb-4\">\ud83d\udcf1</div>\n              <h3 className=\"font-black text-2xl mb-3 text-white\">Easy Peasy!</h3>\n              <p className=\"text-white font-bold\">\n                One click to download, print, and start coloring!\n              </p>\n            </div>\n          </div>\n        </div>\n      </section>\n    </div>\n  );\n}
+    <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-8 md:py-16">
+        <div className="text-center space-y-6">
+          {/* Logo and Title */}
+          <div className="flex flex-col items-center gap-6 mb-8">
+            <div className="relative w-48 h-48 md:w-64 md:h-64">
+              <Image
+                src="https://customer-assets.emergentagent.com/job_mandala-maker-2/artifacts/xyc9pvqy_Coloringpages%20logo%20%281%29.png"
+                alt="Creative Coloring Pages Logo"
+                fill
+                className="object-contain drop-shadow-2xl"
+                priority
+              />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-4xl md:text-6xl font-black text-gray-800">
+                Creative Coloring Pages
+              </h1>
+              <div className="inline-block bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-bold text-xl md:text-3xl py-3 px-8 rounded-full shadow-xl transform hover:scale-105 transition-transform">
+                <Palette className="inline-block mr-2 h-8 w-8" />
+                100% FREE Coloring Pages!
+              </div>
+            </div>
+          </div>
+          
+          <p className="text-xl md:text-2xl font-bold text-gray-700 max-w-3xl mx-auto leading-relaxed">
+            Perfect for kids and families! Download, print, and color amazing pages!
+          </p>
+          
+          {/* Search Bar */}
+          <div className="flex justify-center pt-4">
+            <div className="w-full max-w-2xl">
+              <SearchBar />
+            </div>
+          </div>
+          
+          {/* Stats */}
+          <div className="flex flex-wrap justify-center gap-4 pt-6">
+            <div className="bg-white border-4 border-blue-400 text-blue-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+              <Star className="inline-block mr-2 h-5 w-5" />
+              {categories.length}+ Categories
+            </div>
+            <div className="bg-white border-4 border-pink-400 text-pink-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+              <Palette className="inline-block mr-2 h-5 w-5" />
+              New Pages Daily
+            </div>
+            <div className="bg-white border-4 border-green-400 text-green-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
+              <Download className="inline-block mr-2 h-5 w-5" />
+              Easy to Print!
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      {categories.length > 0 && (
+        <section className="container mx-auto px-4 mb-16">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl p-8 shadow-2xl mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <h2 className="text-3xl md:text-5xl font-black text-white text-center">
+                Choose Your Favorite Category!
+              </h2>
+              <Heart className="h-8 w-8 text-yellow-300 animate-pulse" />
+            </div>
+            <p className="text-center text-white font-bold text-lg md:text-xl">
+              Click any category to see amazing coloring pages!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            {categories.map((category) => (
+              <div key={category._id} className="transform hover:scale-105 transition-all duration-300">
+                <CategoryCard category={category} />
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-10">
+            <Link href="/search">
+              <Button size="lg" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
+                <Sparkles className="mr-2 h-6 w-6" />
+                See All Categories
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Latest Printables */}
+      {printables.length > 0 && (
+        <section className="container mx-auto px-4 mb-16">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-3xl p-8 shadow-2xl mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <h2 className="text-3xl md:text-5xl font-black text-white text-center">
+                New Coloring Pages!
+              </h2>
+              <Smile className="h-8 w-8 text-yellow-300" />
+            </div>
+            <p className="text-center text-white font-bold text-lg md:text-xl">
+              Fresh pages added just for you!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {printables.map((printable) => (
+              <div key={printable._id} className="transform hover:scale-105 transition-all duration-300">
+                <PrintableCard printable={printable} />
+              </div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-10">
+            <Link href="/search">
+              <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
+                <Palette className="mr-2 h-6 w-6" />
+                Browse All Pages
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
+      {/* Empty State */}
+      {categories.length === 0 && printables.length === 0 && (
+        <section className="container mx-auto px-4 py-20">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl p-12 shadow-2xl text-center max-w-2xl mx-auto">
+            <Sparkles className="h-24 w-24 text-white mx-auto mb-6 animate-pulse" />
+            <h2 className="text-4xl font-black text-white mb-4">
+              Coming Soon!
+            </h2>
+            <p className="text-white font-bold text-xl mb-8">
+              We are adding amazing coloring pages for you! Check back soon!
+            </p>
+            <Link href="/admin/login">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-black text-xl py-6 px-10 rounded-full shadow-xl transform hover:scale-110 transition-all">
+                Admin Panel
+              </Button>
+            </Link>
+            <div className="mt-6 bg-white rounded-2xl p-4 inline-block">
+              <p className="text-blue-600 font-bold">Default Login:</p>
+              <p className="text-gray-700 font-mono text-sm">admin@printables.com</p>
+              <p className="text-gray-700 font-mono text-sm">admin123</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Features Section */}
+      <section className="container mx-auto px-4 pb-16">
+        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-purple-300">
+          <h2 className="text-3xl md:text-5xl font-black text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-pink-600">
+            Why Kids Love CCP!
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            <div className="text-center bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl p-8 shadow-xl transform hover:scale-105 transition-transform">
+              <div className="text-6xl mb-4">🎨</div>
+              <h3 className="font-black text-2xl mb-3 text-white">Super Fun!</h3>
+              <p className="text-white font-bold">
+                Thousands of cool coloring pages that kids love!
+              </p>
+            </div>
+            <div className="text-center bg-gradient-to-br from-pink-500 to-orange-500 rounded-3xl p-8 shadow-xl transform hover:scale-105 transition-transform">
+              <div className="text-6xl mb-4">✨</div>
+              <h3 className="font-black text-2xl mb-3 text-white">Always Free!</h3>
+              <p className="text-white font-bold">
+                Download and print as many times as you want - FREE!
+              </p>
+            </div>
+            <div className="text-center bg-gradient-to-br from-green-500 to-blue-500 rounded-3xl p-8 shadow-xl transform hover:scale-105 transition-transform">
+              <div className="text-6xl mb-4">📱</div>
+              <h3 className="font-black text-2xl mb-3 text-white">Easy Peasy!</h3>
+              <p className="text-white font-bold">
+                One click to download, print, and start coloring!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
