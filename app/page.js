@@ -1,38 +1,64 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import CategoryCard from '@/components/CategoryCard';
-import PrintableCard from '@/components/PrintableCard';
 import SearchBar from '@/components/SearchBar';
-import { getCollection, initializeDatabase } from '@/lib/db';
-import { ensureAdminUser } from '@/lib/auth';
-import { Sparkles, Star, Heart, Smile, Download, Palette } from 'lucide-react';
+import { Sparkles, Star, Heart, Download, Palette, Smile } from 'lucide-react';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 async function getHomeData() {
   try {
-    await initializeDatabase();
-    await ensureAdminUser();
-    
-    const categories = await getCollection('categories');
-    const printables = await getCollection('printables');
-    
-    const featuredCategories = await categories.find({}).limit(12).toArray();
-    const latestPrintables = await printables.find({}).sort({ createdAt: -1 }).limit(8).toArray();
-    
+    // Get 3 main categories (parent categories only)
+    const mainCategories = await prisma.category.findMany({
+      where: {
+        parentId: null,
+        isActive: true
+      },
+      orderBy: {
+        order: 'asc'
+      },
+      take: 3
+    });
+
+    // Get subcategories for each main category
+    const categoriesWithSubs = await Promise.all(
+      mainCategories.map(async (mainCat) => {
+        const subcategories = await prisma.category.findMany({
+          where: {
+            parentId: mainCat.id,
+            isActive: true
+          },
+          orderBy: {
+            order: 'asc'
+          },
+          take: 12
+        });
+        
+        return {
+          ...mainCat,
+          subcategories
+        };
+      })
+    );
+
+    // Get product count
+    const productCount = await prisma.product.count({
+      where: { isActive: true }
+    });
+
     return {
-      categories: JSON.parse(JSON.stringify(featuredCategories)),
-      printables: JSON.parse(JSON.stringify(latestPrintables))
+      mainCategories: JSON.parse(JSON.stringify(categoriesWithSubs)),
+      productCount
     };
   } catch (error) {
     console.error('Error fetching home data:', error);
-    return { categories: [], printables: [] };
+    return { mainCategories: [], productCount: 0 };
   }
 }
 
 export default async function Home() {
-  const { categories, printables } = await getHomeData();
+  const { mainCategories, productCount } = await getHomeData();
 
   return (
     <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
@@ -76,7 +102,7 @@ export default async function Home() {
           <div className="flex flex-wrap justify-center gap-4 pt-6">
             <div className="bg-white border-4 border-blue-400 text-blue-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <Star className="inline-block mr-2 h-5 w-5" />
-              {categories.length}+ Categories
+              {mainCategories.length * 12}+ Categories
             </div>
             <div className="bg-white border-4 border-pink-400 text-pink-600 font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow">
               <Palette className="inline-block mr-2 h-5 w-5" />
@@ -90,97 +116,158 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
+      {/* 3 SUPER MAIN CATEGORIES */}
+      <section className="container mx-auto px-4 mb-16">
+        <div className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-3xl p-8 shadow-2xl mb-8">
+          <h2 className="text-3xl md:text-5xl font-black text-white text-center mb-2">
+            🎨 Choose Your Collection! 🌈
+          </h2>
+          <p className="text-center text-white font-bold text-lg md:text-xl">
+            Click on any category to explore amazing content!
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          {mainCategories.map((mainCat, index) => {
+            const gradients = [
+              'from-blue-500 to-purple-600',
+              'from-green-500 to-teal-600', 
+              'from-pink-500 to-orange-500'
+            ];
+            const emojis = ['🎨', '📅', '📄'];
+            
+            return (
+              <Link key={mainCat.id} href={`/category/${mainCat.slug}`}>
+                <div className={`bg-gradient-to-br ${gradients[index]} rounded-3xl p-8 shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-white`}>
+                  <div className="text-center space-y-4">
+                    <div className="text-8xl mb-4">{emojis[index]}</div>
+                    <h3 className="text-3xl md:text-4xl font-black text-white">
+                      {mainCat.name}
+                    </h3>
+                    <p className="text-white font-bold text-lg">
+                      {mainCat.description}
+                    </p>
+                    <div className="bg-white text-gray-800 font-black py-3 px-6 rounded-full inline-block">
+                      {mainCat.subcategories?.length || 0} Categories Inside!
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* SECTION 1: COLORING PAGES SUBCATEGORIES */}
+      {mainCategories[0] && mainCategories[0].subcategories && (
         <section className="container mx-auto px-4 mb-16">
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
               <h2 className="text-3xl md:text-5xl font-black text-white text-center">
-                Choose Your Favorite Category!
+                {mainCategories[0].name}
               </h2>
               <Heart className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
             <p className="text-center text-white font-bold text-lg md:text-xl">
-              Click any category to see amazing coloring pages!
+              Click any category to see beautiful coloring pages!
             </p>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-            {categories.map((category) => (
-              <div key={category._id} className="transform hover:scale-105 transition-all duration-300">
-                <CategoryCard category={category} />
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-10">
-            <Link href="/search">
-              <Button size="lg" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
-                <Sparkles className="mr-2 h-6 w-6" />
-                See All Categories
-              </Button>
-            </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {mainCategories[0].subcategories.map((subCat, idx) => {
+              const colors = ['blue', 'pink', 'green', 'purple', 'orange', 'yellow'];
+              const color = colors[idx % colors.length];
+              
+              return (
+                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                  <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
+                    <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
+                      <span className="text-5xl">{['🐾', '👑', '🎮', '📺', '🦄', '🎄', '📚', '🌸', '🌳', '🚗', '⚽', '🍦'][idx]}</span>
+                    </div>
+                    <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
+                      {subCat.name}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* Latest Printables */}
-      {printables.length > 0 && (
+      {/* SECTION 2: CALENDARS SUBCATEGORIES */}
+      {mainCategories[1] && mainCategories[1].subcategories && (
         <section className="container mx-auto px-4 mb-16">
-          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-3xl p-8 shadow-2xl mb-8">
+          <div className="bg-gradient-to-r from-green-500 to-teal-500 rounded-3xl p-8 shadow-2xl mb-8">
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
               <h2 className="text-3xl md:text-5xl font-black text-white text-center">
-                New Coloring Pages!
+                {mainCategories[1].name}
               </h2>
-              <Smile className="h-8 w-8 text-yellow-300" />
+              <Star className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
             <p className="text-center text-white font-bold text-lg md:text-xl">
-              Fresh pages added just for you!
+              Plan your days with our free printable calendars!
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {printables.map((printable) => (
-              <div key={printable._id} className="transform hover:scale-105 transition-all duration-300">
-                <PrintableCard printable={printable} />
-              </div>
-            ))}
-          </div>
-          
-          <div className="text-center mt-10">
-            <Link href="/search">
-              <Button size="lg" className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
-                <Palette className="mr-2 h-6 w-6" />
-                Browse All Pages
-              </Button>
-            </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {mainCategories[1].subcategories.map((subCat, idx) => {
+              const colors = ['green', 'teal', 'blue', 'indigo', 'purple', 'pink'];
+              const color = colors[idx % colors.length];
+              
+              return (
+                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                  <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
+                    <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
+                      <span className="text-5xl">{['📅', '📆', '📋', '📝', '🎓', '🎂', '🍽️', '✅', '🎯', '💪', '💰', '📄'][idx]}</span>
+                    </div>
+                    <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
+                      {subCat.name}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
 
-      {/* Empty State */}
-      {categories.length === 0 && printables.length === 0 && (
-        <section className="container mx-auto px-4 py-20">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl p-12 shadow-2xl text-center max-w-2xl mx-auto">
-            <Sparkles className="h-24 w-24 text-white mx-auto mb-6 animate-pulse" />
-            <h2 className="text-4xl font-black text-white mb-4">
-              Coming Soon!
-            </h2>
-            <p className="text-white font-bold text-xl mb-8">
-              We are adding amazing coloring pages for you! Check back soon!
-            </p>
-            <Link href="/admin/login">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-black text-xl py-6 px-10 rounded-full shadow-xl transform hover:scale-110 transition-all">
-                Admin Panel
-              </Button>
-            </Link>
-            <div className="mt-6 bg-white rounded-2xl p-4 inline-block">
-              <p className="text-blue-600 font-bold">Default Login:</p>
-              <p className="text-gray-700 font-mono text-sm">admin@printables.com</p>
-              <p className="text-gray-700 font-mono text-sm">admin123</p>
+      {/* SECTION 3: PRINTABLES SUBCATEGORIES */}
+      {mainCategories[2] && mainCategories[2].subcategories && (
+        <section className="container mx-auto px-4 mb-16">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-3xl p-8 shadow-2xl mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Smile className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <h2 className="text-3xl md:text-5xl font-black text-white text-center">
+                {mainCategories[2].name}
+              </h2>
+              <Smile className="h-8 w-8 text-yellow-300 animate-pulse" />
             </div>
+            <p className="text-center text-white font-bold text-lg md:text-xl">
+              Free templates for every occasion!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {mainCategories[2].subcategories.map((subCat, idx) => {
+              const colors = ['orange', 'red', 'pink', 'purple', 'blue', 'green'];
+              const color = colors[idx % colors.length];
+              
+              return (
+                <Link key={subCat.id} href={`/category/${subCat.slug}`}>
+                  <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
+                    <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
+                      <span className="text-5xl">{['📝', '🃏', '🏆', '💌', '🏷️', '🎉', '🏷️', '🔖', '🖼️', '✓', '🎈', '🎲'][idx]}</span>
+                    </div>
+                    <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
+                      {subCat.name}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
