@@ -1,17 +1,18 @@
-// Seed script for 3 main categories + 36 subcategories (12 each)
+// Updated seed script with proper hierarchy
+// Collections > Categories > Subcategories
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-const categoriesData = [
-  // MAIN CATEGORY 1: COLORING PAGES
+const collectionsData = [
+  // COLLECTION 1: COLORING PAGES
   {
     name: 'Coloring Pages',
     slug: 'coloring-pages',
     description: 'Free printable coloring pages for kids and adults',
     image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800',
     order: 1,
-    children: [
+    categories: [
       { name: 'Animals & Pets', slug: 'animals-pets', description: 'Cute animals, butterflies, and pets', image: '', order: 1 },
       { name: 'Disney Characters', slug: 'disney-characters', description: 'Disney princesses and characters', image: '', order: 2 },
       { name: 'Video Games', slug: 'video-games', description: 'Minecraft, Pokemon, Sonic, Roblox', image: '', order: 3 },
@@ -27,14 +28,14 @@ const categoriesData = [
     ]
   },
   
-  // MAIN CATEGORY 2: CALENDARS
+  // COLLECTION 2: CALENDARS
   {
     name: 'Calendars',
     slug: 'calendars',
     description: 'Free printable calendars and planners',
     image: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800',
     order: 2,
-    children: [
+    categories: [
       { name: '2025 Calendar', slug: '2025-calendar', description: 'Full year 2025 calendar', image: '', order: 1 },
       { name: 'Monthly Calendars', slug: 'monthly-calendars', description: 'Month by month calendars', image: '', order: 2 },
       { name: 'Weekly Planners', slug: 'weekly-planners', description: 'Weekly planning templates', image: '', order: 3 },
@@ -50,14 +51,14 @@ const categoriesData = [
     ]
   },
   
-  // MAIN CATEGORY 3: PRINTABLES
+  // COLLECTION 3: PRINTABLES
   {
     name: 'Printables',
     slug: 'printables',
     description: 'Free printable templates and worksheets',
     image: 'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=800',
     order: 3,
-    children: [
+    categories: [
       { name: 'Worksheets', slug: 'worksheets', description: 'Educational worksheets for kids', image: '', order: 1 },
       { name: 'Flashcards', slug: 'flashcards', description: 'Learning flashcards', image: '', order: 2 },
       { name: 'Certificates', slug: 'certificates', description: 'Award certificates', image: '', order: 3 },
@@ -75,50 +76,50 @@ const categoriesData = [
 ];
 
 async function main() {
-  console.log('🌱 Starting seed...');
+  console.log('🌱 Re-seeding with updated structure...');
 
   // Clear existing data
   console.log('🗑️  Clearing existing categories...');
   await prisma.category.deleteMany({});
 
-  // Create main categories and subcategories
-  for (const mainCategory of categoriesData) {
-    console.log(`\n📁 Creating main category: ${mainCategory.name}`);
+  // Create collections (top level) and categories (inside them)
+  for (const collection of collectionsData) {
+    console.log(`\n📚 Creating Collection: ${collection.name}`);
     
-    const { children, ...mainCategoryData } = mainCategory;
+    const { categories, ...collectionData } = collection;
     
-    const createdMainCategory = await prisma.category.create({
+    const createdCollection = await prisma.category.create({
       data: {
-        ...mainCategoryData,
+        ...collectionData,
         isActive: true
       }
     });
 
-    console.log(`✅ Created: ${createdMainCategory.name} (${createdMainCategory.slug})`);
+    console.log(`✅ Created Collection: ${createdCollection.name}`);
 
-    // Create subcategories
-    if (children && children.length > 0) {
-      console.log(`   📂 Creating ${children.length} subcategories...`);
+    // Create categories inside this collection
+    if (categories && categories.length > 0) {
+      console.log(`   📁 Creating ${categories.length} categories inside...`);
       
-      for (const subCategory of children) {
-        const createdSubCategory = await prisma.category.create({
+      for (const category of categories) {
+        const createdCategory = await prisma.category.create({
           data: {
-            ...subCategory,
-            parentId: createdMainCategory.id,
+            ...category,
+            parentId: createdCollection.id,
             isActive: true
           }
         });
         
-        console.log(`   ✅ ${createdSubCategory.name}`);
+        console.log(`   ✅ ${createdCategory.name}`);
       }
     }
   }
 
   console.log('\n✨ Seed completed successfully!');
-  console.log('\n📊 Summary:');
-  console.log(`   - 3 main categories created`);
-  console.log(`   - 36 subcategories created (12 per main category)`);
-  console.log(`   - Total: 39 categories`);
+  console.log('\n📊 New Structure:');
+  console.log(`   - 3 Collections (Coloring Pages, Calendars, Printables)`);
+  console.log(`   - 36 Categories (12 per collection)`);
+  console.log(`   - Total: 39 items`);
 }
 
 main()
