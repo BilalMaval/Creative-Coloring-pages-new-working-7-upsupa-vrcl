@@ -1,16 +1,57 @@
-import './globals.css'
+import localFont from "next/font/local";
+import "./globals.css";
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { generateMetadata as genMeta } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Next.js MongoDB Template',
-  description: 'A simple template with App Router, MongoDB, and shadcn/ui',
-}
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
+
+export const metadata = genMeta({
+  title: 'Free Printable Coloring Pages & Mandalas',
+  description: 'Download and print free coloring pages, mandalas, and printable activities for kids and adults. New designs added regularly!',
+  keywords: 'coloring pages, printable coloring pages, mandalas, free printables, coloring sheets, kids coloring, adult coloring, mandala designs'
+});
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
-        {children}
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Free Printable Coloring Pages & Mandalas',
+              description: 'Download free printable coloring pages and mandalas for kids and adults',
+              url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/search?q={search_term_string}`,
+                'query-input': 'required name=search_term_string'
+              }
+            })
+          }}
+        />
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </body>
     </html>
-  )
+  );
 }
