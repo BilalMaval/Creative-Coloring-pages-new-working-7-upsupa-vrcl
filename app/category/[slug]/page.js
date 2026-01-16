@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import PrintableCard from '@/components/PrintableCard';
-import Breadcrumbs from '@/components/Breadcrumbs';
+import Image from 'next/image';
+import { Download, ArrowLeft, Grid3x3, Star, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getCollection } from '@/lib/db';
-import { generateMetadata as genMeta, generateBreadcrumbSchema } from '@/lib/seo';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,55 +11,55 @@ export async function generateMetadata({ params }) {
   const { slug } = params;
   
   try {
-    const categories = await getCollection('categories');
-    const category = await categories.findOne({ slug });
+    const category = await prisma.category.findFirst({
+      where: { slug },
+      include: { parent: true }
+    });
     
     if (!category) {
       return {};
     }
     
-    return genMeta({
-      title: `${category.name} Coloring Pages - Free Printables`,
-      description: category.description || `Download free ${category.name.toLowerCase()} coloring pages. High-quality printable designs perfect for kids and adults.`,
-      keywords: `${category.name} coloring pages, ${category.name} printables, free ${category.name} coloring sheets`,
-      url: `/category/${slug}`,
-      image: category.image
-    });
+    return {
+      title: `${category.name} - Creative Coloring Pages`,
+      description: category.description || `Browse ${category.name.toLowerCase()} and find amazing printables.`,
+    };
   } catch (error) {
     return {};
   }
 }
 
-async function getCategoryData(slug, page = 1) {
+async function getCategoryData(slug) {
   try {
-    const categories = await getCollection('categories');
-    const printables = await getCollection('printables');
+    const category = await prisma.category.findFirst({
+      where: {
+        slug,
+        isActive: true
+      },
+      include: {
+        parent: true,
+        _count: {
+          select: { products: true }
+        }
+      }
+    });
     
-    const category = await categories.findOne({ slug });
     if (!category) return null;
     
-    const limit = 12;
-    const skip = (page - 1) * limit;
-    
-    const total = await printables.countDocuments({ category_id: category._id });
-    const items = await printables
-      .find({ category_id: category._id })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const products = await prisma.product.findMany({
+      where: {
+        categoryId: category.id,
+        isActive: true
+      },
+      orderBy: [
+        { isFeatured: 'desc' },
+        { createdAt: 'desc' }
+      ]
+    });
     
     return {
       category: JSON.parse(JSON.stringify(category)),
-      printables: JSON.parse(JSON.stringify(items)),
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
+      products: JSON.parse(JSON.stringify(products))
     };
   } catch (error) {
     console.error('Error fetching category:', error);
@@ -68,88 +67,171 @@ async function getCategoryData(slug, page = 1) {
   }
 }
 
-export default async function CategoryPage({ params, searchParams }) {
+export default async function CategoryPage({ params }) {
   const { slug } = params;
-  const page = parseInt(searchParams.page || '1');
-  
-  const data = await getCategoryData(slug, page);
+  const data = await getCategoryData(slug);
   
   if (!data) {
     notFound();
   }
   
-  const { category, printables, pagination } = data;
+  const { category, products } = data;
   
-  const breadcrumbItems = [
-    { name: 'Categories', url: '/search' },
-    { name: category.name }
-  ];
-  
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'Home', url: '/' },
-    ...breadcrumbItems
-  ]);
+  // Determine gradient based on parent collection
+  const getGradient = () => {
+    if (!category.parent) return 'from-blue-500 to-purple-500';
+    
+    const parentSlug = category.parent.slug;
+    if (parentSlug === 'coloring-pages') return 'from-purple-500 to-pink-500';
+    if (parentSlug === 'calendars') return 'from-green-500 to-teal-500';
+    if (parentSlug === 'printables') return 'from-orange-500 to-red-500';
+    return 'from-blue-500 to-purple-500';
+  };
+
+  const gradient = getGradient();
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      
-      <Breadcrumbs items={breadcrumbItems} />
-      
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">{category.name} Coloring Pages</h1>
-        {category.description && (
-          <p className="text-lg text-muted-foreground max-w-3xl">
-            {category.description}
-          </p>
-        )}
-      </div>
-      
-      {/* SEO Content */}
-      <div className="max-w-4xl mb-12 prose prose-slate dark:prose-invert">
-        <p className="text-muted-foreground">
-          Explore our collection of free {category.name.toLowerCase()} coloring pages. Each design is carefully crafted to provide hours of creative fun. Perfect for children and adults alike, these printable coloring sheets are high-quality and ready to download. Simply click on any image to view the full-size coloring page, then download and print as many copies as you need.
-        </p>
-        <p className="text-muted-foreground">
-          Our {category.name.toLowerCase()} coloring pages are suitable for all skill levels. Whether you're just starting out or you're an experienced colorist, you'll find designs that inspire your creativity. All printables are completely free with no registration required.
-        </p>
-      </div>
-      
-      {printables.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {printables.map((printable) => (
-              <PrintableCard key={printable._id} printable={printable} />
-            ))}
+    <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className={`bg-gradient-to-r ${gradient} rounded-3xl p-8 md:p-12 shadow-2xl mb-8`}>
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl md:text-6xl font-black text-white">
+              {category.name}
+            </h1>
+            {category.description && (
+              <p className="text-xl md:text-2xl font-bold text-white max-w-2xl mx-auto">
+                {category.description}
+              </p>
+            )}
+            <div className="flex flex-wrap justify-center gap-4">
+              <div className="bg-white text-gray-800 font-black py-3 px-6 rounded-full inline-block">
+                <Grid3x3 className="inline-block mr-2 h-5 w-5" />
+                {products.length} {products.length === 1 ? 'Item' : 'Items'}
+              </div>
+              <div className="bg-white/20 text-white font-bold py-3 px-6 rounded-full inline-block">
+                ✨ 100% FREE!
+              </div>
+            </div>
           </div>
-          
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-4">
-              {pagination.hasPrev && (
-                <Link href={`/category/${slug}?page=${page - 1}`}>
-                  <Button variant="outline">Previous</Button>
+        </div>
+
+        {/* Breadcrumbs */}
+        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-8 flex-wrap">
+          <Link href="/" className="hover:text-blue-600 transition-colors font-bold">
+            Home
+          </Link>
+          <span>›</span>
+          {category.parent && (
+            <>
+              <Link href={`/collection/${category.parent.slug}`} className="hover:text-blue-600 transition-colors font-bold">
+                {category.parent.name}
+              </Link>
+              <span>›</span>
+            </>
+          )}
+          <span className="text-gray-800 font-bold">{category.name}</span>
+        </div>
+
+        {products.length > 0 ? (
+          <>
+            <div className="mb-6">
+              <h2 className="text-2xl md:text-3xl font-black text-gray-800 flex items-center gap-2">
+                <Star className="h-8 w-8 text-yellow-500" />
+                Available Products
+              </h2>
+              <p className="text-gray-600 font-medium mt-2">
+                Click any product to view details and download
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+              {products.map((product) => (
+                <Link key={product.id} href={`/product/${product.slug}`}>
+                  <div className="bg-white rounded-2xl p-3 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-gray-200 hover:border-blue-400">
+                    <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl mb-3 relative overflow-hidden">
+                      {product.webpPath ? (
+                        <Image
+                          src={product.webpPath}
+                          alt={product.title}
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-4xl">🎨</span>
+                        </div>
+                      )}
+                      {product.isFeatured && (
+                        <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-black px-2 py-1 rounded-full">
+                          ⭐ Featured
+                        </div>
+                      )}
+                      {product.isFree && (
+                        <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-black px-2 py-1 rounded-full">
+                          FREE
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="font-black text-center text-gray-800 text-xs md:text-sm line-clamp-2 mb-1">
+                      {product.title}
+                    </h3>
+                    <div className="flex items-center justify-center gap-1 text-xs text-gray-600">
+                      <Download className="h-3 w-3" />
+                      <span>{product.downloads || 0}</span>
+                    </div>
+                  </div>
                 </Link>
-              )}
-              <span className="text-sm text-muted-foreground">
-                Page {pagination.page} of {pagination.totalPages}
-              </span>
-              {pagination.hasNext && (
-                <Link href={`/category/${slug}?page=${page + 1}`}>
-                  <Button variant="outline">Next</Button>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              {category.parent ? (
+                <Link href={`/collection/${category.parent.slug}`}>
+                  <Button size="lg" className={`bg-gradient-to-r ${gradient} text-white font-black text-xl py-6 px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all`}>
+                    <ArrowLeft className="mr-2 h-6 w-6" />
+                    Back to {category.parent.name}
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/">
+                  <Button size="lg" className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-black text-xl py-6 px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
+                    <ArrowLeft className="mr-2 h-6 w-6" />
+                    Back to Home
+                  </Button>
                 </Link>
               )}
             </div>
-          )}
-        </>
-      ) : (
-        <div className="text-center py-20">
-          <p className="text-muted-foreground">No printables available in this category yet.</p>
-        </div>
-      )}
+          </>
+        ) : (
+          <div className="text-center py-20">
+            <div className="bg-white rounded-3xl p-12 shadow-xl max-w-2xl mx-auto">
+              <Heart className="h-24 w-24 text-gray-400 mx-auto mb-6" />
+              <h3 className="text-3xl font-black text-gray-600 mb-4">
+                No Products Yet
+              </h3>
+              <p className="text-gray-500 mb-8 text-lg">
+                We're working on adding amazing {category.name.toLowerCase()} for you!
+              </p>
+              {category.parent ? (
+                <Link href={`/collection/${category.parent.slug}`}>
+                  <Button size="lg" className={`bg-gradient-to-r ${gradient} text-white font-black text-xl py-4 px-8 rounded-full shadow-xl`}>
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                    Browse Other Categories
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/">
+                  <Button size="lg">
+                    <ArrowLeft className="mr-2 h-5 w-5" />
+                    Back to Home
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
