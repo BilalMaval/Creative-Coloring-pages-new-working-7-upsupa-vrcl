@@ -88,6 +88,27 @@ async function main() {
   console.log('🗑️  Clearing existing categories...');
   await prisma.category.deleteMany({});
 
+  // Create admin user
+  console.log('\n👤 Creating admin user...');
+  const adminExists = await prisma.user.findUnique({
+    where: { email: 'admin@printables.com' }
+  });
+  
+  if (!adminExists) {
+    await prisma.user.create({
+      data: {
+        name: 'Admin',
+        email: 'admin@printables.com',
+        password: hashPassword('admin123'),
+        role: 'ADMIN',
+        emailVerified: true
+      }
+    });
+    console.log('✅ Admin user created: admin@printables.com / admin123');
+  } else {
+    console.log('✅ Admin user already exists');
+  }
+
   // Create collections (top level) and categories (inside them)
   for (const collection of collectionsData) {
     console.log(`\n📚 Creating Collection: ${collection.name}`);
@@ -125,7 +146,8 @@ async function main() {
   console.log('\n📊 New Structure:');
   console.log(`   - 3 Collections (Coloring Pages, Calendars, Printables)`);
   console.log(`   - 36 Categories (12 per collection)`);
-  console.log(`   - Total: 39 items`);
+  console.log(`   - 1 Admin user (admin@printables.com / admin123)`);
+  console.log(`   - Total: 39 categories + 1 user`);
 }
 
 main()
