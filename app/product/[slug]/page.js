@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { ArrowLeft, Tag, Calendar, Eye, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import DownloadButton from '@/components/DownloadButton';
 
 export default function ProductPageClient({ product, relatedProducts, gradient }) {
   const formattedDate = new Date(product.createdAt).toLocaleDateString('en-US', {
