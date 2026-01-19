@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Download, ArrowLeft, Tag, Calendar, Eye, Heart, Share2 } from 'lucide-react';
+import { ArrowLeft, Tag, Calendar, Eye, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
