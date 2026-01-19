@@ -233,13 +233,17 @@ export default async function ProductPage({ params }) {
                   </div>
                 )}
                 
-                <Button
-                  size="lg"
-                  className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all`}
-                >
-                  <Download className="mr-3 h-8 w-8" />
-                  {product.isFree ? 'Download FREE' : 'Add to Cart'}
-                </Button>
+                <form action={product.isFree ? `/api/download` : `/api/cart`} method="POST">
+                  <input type="hidden" name="productId" value={product.id} />
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all`}
+                  >
+                    <Download className="mr-3 h-8 w-8" />
+                    {product.isFree ? 'Download FREE' : 'Add to Cart'}
+                  </Button>
+                </form>
 
                 <div className="flex gap-2">
                   <Button variant="outline" size="lg" className="flex-1 font-bold">
