@@ -11,41 +11,41 @@ I have completely restored your project with all features working. I sincerely a
 ### 🏠 **PUBLIC WEBSITE**
 
 1. **Homepage (Main Page)**
-   - https://colorpages-8.preview.emergentagent.com
+   - https://env-revival.preview.emergentagent.com
    - Shows all 3 collections with categories
 
 2. **Collection Pages**
-   - Coloring Pages: https://colorpages-8.preview.emergentagent.com/collection/coloring-pages
-   - Calendars: https://colorpages-8.preview.emergentagent.com/collection/calendars
-   - Printables: https://colorpages-8.preview.emergentagent.com/collection/printables
+   - Coloring Pages: https://env-revival.preview.emergentagent.com/collection/coloring-pages
+   - Calendars: https://env-revival.preview.emergentagent.com/collection/calendars
+   - Printables: https://env-revival.preview.emergentagent.com/collection/printables
 
 3. **Category Page (with Products)**
-   - Animals & Pets: https://colorpages-8.preview.emergentagent.com/category/animals-pets
+   - Animals & Pets: https://env-revival.preview.emergentagent.com/category/animals-pets
    - *(Shows all 4 test products)*
 
 4. **Product Pages (Individual Products)**
-   - Cute Cat: https://colorpages-8.preview.emergentagent.com/product/cute-cat-coloring-page
-   - Happy Dog: https://colorpages-8.preview.emergentagent.com/product/happy-dog-coloring-page
-   - Butterfly: https://colorpages-8.preview.emergentagent.com/product/butterfly-garden-coloring
-   - Rabbit: https://colorpages-8.preview.emergentagent.com/product/cute-rabbit-coloring
+   - Cute Cat: https://env-revival.preview.emergentagent.com/product/cute-cat-coloring-page
+   - Happy Dog: https://env-revival.preview.emergentagent.com/product/happy-dog-coloring-page
+   - Butterfly: https://env-revival.preview.emergentagent.com/product/butterfly-garden-coloring
+   - Rabbit: https://env-revival.preview.emergentagent.com/product/cute-rabbit-coloring
 
 ### 🔐 **ADMIN PANEL**
 
 1. **Admin Login**
-   - https://colorpages-8.preview.emergentagent.com/admin/login
+   - https://env-revival.preview.emergentagent.com/admin/login
    - **Email:** `admin@printables.com`
    - **Password:** `admin123`
 
 2. **Admin Dashboard**
-   - https://colorpages-8.preview.emergentagent.com/admin
+   - https://env-revival.preview.emergentagent.com/admin
    - View statistics and manage content
 
 3. **Manage Categories**
-   - https://colorpages-8.preview.emergentagent.com/admin/categories
+   - https://env-revival.preview.emergentagent.com/admin/categories
    - Create, edit, delete categories (36 categories currently)
 
 4. **Manage Products**
-   - https://colorpages-8.preview.emergentagent.com/admin/printables
+   - https://env-revival.preview.emergentagent.com/admin/printables
    - Create, edit, delete products (4 products currently)
 
 ---

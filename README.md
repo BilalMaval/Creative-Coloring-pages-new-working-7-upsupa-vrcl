@@ -107,7 +107,7 @@ The following environment variables are already configured in `/app/.env`:
 ```env
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=your_database_name
-NEXT_PUBLIC_BASE_URL=https://colorpages-8.preview.emergentagent.com
+NEXT_PUBLIC_BASE_URL=https://env-revival.preview.emergentagent.com
 CORS_ORIGINS=*
 ```
 
