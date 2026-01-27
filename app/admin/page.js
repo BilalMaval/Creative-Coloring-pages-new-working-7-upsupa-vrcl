@@ -4,13 +4,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, FolderOpen, Download, TrendingUp } from 'lucide-react';
+import { FileText, FolderOpen, Download, Library } from 'lucide-react';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [stats, setStats] = useState({
+    collections: 0,
     categories: 0,
-    printables: 0,
+    products: 0,
     downloads: 0
   });
   const [loading, setLoading] = useState(true);
@@ -18,20 +19,24 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [categoriesRes, printablesRes] = await Promise.all([
+        const [collectionsRes, categoriesRes, productsRes] = await Promise.all([
+          fetch('/api/collections'),
           fetch('/api/categories'),
           fetch('/api/printables?limit=1000')
         ]);
 
+        const collectionsData = await collectionsRes.json();
         const categoriesData = await categoriesRes.json();
-        const printablesData = await printablesRes.json();
+        const productsData = await productsRes.json();
 
-        if (categoriesData.success && printablesData.success) {
-          const totalDownloads = printablesData.data.reduce((sum, p) => sum + (p.downloads || 0), 0);
+        if (collectionsData.success && categoriesData.success && productsData.success) {
+          const totalDownloads = productsData.data.reduce((sum, p) => sum + (p.downloads || 0), 0);
+          const childCategories = categoriesData.data.filter(cat => cat.parentId !== null);
           
           setStats({
-            categories: categoriesData.data.length,
-            printables: printablesData.data.length,
+            collections: collectionsData.data.length,
+            categories: childCategories.length,
+            products: productsData.data.length,
             downloads: totalDownloads
           });
         }
@@ -49,10 +54,21 @@ export default function AdminDashboard() {
     <AdminLayout>
       <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
+            <CardTitle className="text-sm font-medium">Collections</CardTitle>
+            <Library className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? '-' : stats.collections}</div>
+            <p className="text-xs text-muted-foreground">Super categories</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Categories</CardTitle>
             <FolderOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -63,18 +79,18 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Printables</CardTitle>
+            <CardTitle className="text-sm font-medium">Products</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? '-' : stats.printables}</div>
+            <div className="text-2xl font-bold">{loading ? '-' : stats.products}</div>
             <p className="text-xs text-muted-foreground">Available for download</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Downloads</CardTitle>
+            <CardTitle className="text-sm font-medium">Downloads</CardTitle>
             <Download className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -92,18 +108,25 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             <button
+              onClick={() => router.push('/admin/collections')}
+              className="w-full text-left px-4 py-3 rounded-lg border hover:bg-muted transition-colors"
+            >
+              <div className="font-medium">Manage Collections</div>
+              <div className="text-sm text-muted-foreground">Add or edit collections (super categories)</div>
+            </button>
+            <button
               onClick={() => router.push('/admin/categories')}
               className="w-full text-left px-4 py-3 rounded-lg border hover:bg-muted transition-colors"
             >
               <div className="font-medium">Manage Categories</div>
-              <div className="text-sm text-muted-foreground">Add or edit categories</div>
+              <div className="text-sm text-muted-foreground">Add or edit categories inside collections</div>
             </button>
             <button
-              onClick={() => router.push('/admin/printables')}
+              onClick={() => router.push('/admin/products')}
               className="w-full text-left px-4 py-3 rounded-lg border hover:bg-muted transition-colors"
             >
-              <div className="font-medium">Manage Printables</div>
-              <div className="text-sm text-muted-foreground">Upload new coloring pages</div>
+              <div className="font-medium">Manage Products</div>
+              <div className="text-sm text-muted-foreground">Upload coloring pages, books, and more</div>
             </button>
             <button
               onClick={() => router.push('/admin/pages')}
@@ -126,8 +149,8 @@ export default function AdminDashboard() {
                 <span className="text-xs font-bold text-primary">1</span>
               </div>
               <div>
-                <div className="font-medium">Create Categories</div>
-                <div className="text-sm text-muted-foreground">Organize your coloring pages by theme</div>
+                <div className="font-medium">Create Collections</div>
+                <div className="text-sm text-muted-foreground">Create super categories like Coloring Pages, Bookshop</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -135,13 +158,22 @@ export default function AdminDashboard() {
                 <span className="text-xs font-bold text-primary">2</span>
               </div>
               <div>
-                <div className="font-medium">Upload Printables</div>
-                <div className="text-sm text-muted-foreground">Add coloring pages with images and PDFs</div>
+                <div className="font-medium">Add Categories</div>
+                <div className="text-sm text-muted-foreground">Organize products by theme within each collection</div>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-primary">3</span>
+              </div>
+              <div>
+                <div className="font-medium">Upload Products</div>
+                <div className="text-sm text-muted-foreground">Add coloring pages, eBooks, and other products</div>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <span className="text-xs font-bold text-primary">4</span>
               </div>
               <div>
                 <div className="font-medium">Customize Pages</div>
