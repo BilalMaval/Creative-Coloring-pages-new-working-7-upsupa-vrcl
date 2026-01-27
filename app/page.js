@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 async function getHomeData() {
   try {
-    // Get 3 main collections (Coloring Pages, Calendars, Printables)
+    // Get all main collections (Coloring Pages, Calendars, Printables, Bookshop)
     const collections = await prisma.category.findMany({
       where: {
         parentId: null,
@@ -18,7 +18,7 @@ async function getHomeData() {
       orderBy: {
         order: 'asc'
       },
-      take: 3
+      take: 4
     });
 
     // Get categories for each collection
