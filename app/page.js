@@ -127,14 +127,15 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {collections.map((collection, index) => {
             const gradients = [
               'from-blue-500 to-purple-600',
               'from-green-500 to-teal-600', 
-              'from-pink-500 to-orange-500'
+              'from-pink-500 to-orange-500',
+              'from-indigo-500 to-purple-600'
             ];
-            const emojis = ['🎨', '📅', '📄'];
+            const emojis = ['🎨', '📅', '📄', '📚'];
             
             return (
               <Link key={collection.id} href={`/collection/${collection.slug}`}>
