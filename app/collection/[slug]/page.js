@@ -84,6 +84,11 @@ export default async function CollectionPage({ params }) {
       gradient: 'from-orange-500 to-red-500',
       emoji: '📄',
       categoryEmojis: ['📝', '🃏', '🏆', '💌', '🏷️', '🎉', '🏷️', '🔖', '🖼️', '✓', '🎈', '🎲']
+    },
+    'bookshop': {
+      gradient: 'from-indigo-500 to-purple-600',
+      emoji: '📚',
+      categoryEmojis: ['📖', '🧒', '📚', '🎨', '🍳', '💪', '📈', '🔮', '💕', '🎭', '🌍', '📓']
     }
   };
   
