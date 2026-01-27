@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LogOut, LayoutDashboard, FolderOpen, FileText, Settings } from 'lucide-react';
+import { LogOut, LayoutDashboard, FolderOpen, FileText, Settings, Library } from 'lucide-react';
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -49,16 +49,22 @@ export default function AdminLayout({ children }) {
                   Dashboard
                 </Button>
               </Link>
+              <Link href="/admin/collections">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Library className="h-4 w-4 mr-2" />
+                  Collections
+                </Button>
+              </Link>
               <Link href="/admin/categories">
                 <Button variant="ghost" className="w-full justify-start">
                   <FolderOpen className="h-4 w-4 mr-2" />
                   Categories
                 </Button>
               </Link>
-              <Link href="/admin/printables">
+              <Link href="/admin/products">
                 <Button variant="ghost" className="w-full justify-start">
                   <FileText className="h-4 w-4 mr-2" />
-                  Printables
+                  Products
                 </Button>
               </Link>
               <Link href="/admin/pages">

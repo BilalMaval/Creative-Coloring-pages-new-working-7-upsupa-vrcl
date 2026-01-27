@@ -6,51 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Loader2, FolderOpen } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Library } from 'lucide-react';
 
-export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState([]);
+export default function AdminCollectionsPage() {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingCollection, setEditingCollection] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [filterCollection, setFilterCollection] = useState('all');
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     description: '',
     image: '',
-    parentId: ''
+    order: 0
   });
 
   useEffect(() => {
-    fetchData();
+    fetchCollections();
   }, []);
 
-  const fetchData = async () => {
+  const fetchCollections = async () => {
     try {
-      const [categoriesRes, collectionsRes] = await Promise.all([
-        fetch('/api/categories'),
-        fetch('/api/collections')
-      ]);
-      
-      const categoriesData = await categoriesRes.json();
-      const collectionsData = await collectionsRes.json();
-      
-      if (categoriesData.success) {
-        // Filter to show only child categories (not main collections)
-        const childCategories = categoriesData.data.filter(cat => cat.parentId !== null);
-        setCategories(childCategories);
-      }
-      if (collectionsData.success) {
-        setCollections(collectionsData.data);
+      const res = await fetch('/api/collections');
+      const data = await res.json();
+      if (data.success) {
+        setCollections(data.data);
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching collections:', error);
     } finally {
       setLoading(false);
     }
@@ -95,15 +81,10 @@ export default function AdminCategoriesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.parentId) {
-      alert('Please select a collection');
-      return;
-    }
-    
     try {
-      const url = '/api/categories';
-      const method = editingCategory ? 'PUT' : 'POST';
-      const body = editingCategory ? { ...formData, id: editingCategory.id } : formData;
+      const url = '/api/collections';
+      const method = editingCollection ? 'PUT' : 'POST';
+      const body = editingCollection ? { ...formData, id: editingCollection.id } : formData;
 
       const res = await fetch(url, {
         method,
@@ -114,99 +95,70 @@ export default function AdminCategoriesPage() {
       const data = await res.json();
       if (data.success) {
         setDialogOpen(false);
-        setEditingCategory(null);
-        setFormData({ name: '', slug: '', description: '', image: '', parentId: '' });
-        fetchData();
+        setEditingCollection(null);
+        setFormData({ name: '', slug: '', description: '', image: '', order: 0 });
+        fetchCollections();
       } else {
-        alert(data.error || 'Failed to save category');
+        alert(data.error || 'Failed to save collection');
       }
     } catch (error) {
-      alert('Failed to save category');
+      alert('Failed to save collection');
     }
   };
 
-  const handleEdit = (category) => {
-    setEditingCategory(category);
+  const handleEdit = (collection) => {
+    setEditingCollection(collection);
     setFormData({
-      name: category.name,
-      slug: category.slug,
-      description: category.description || '',
-      image: category.image || '',
-      parentId: category.parentId || ''
+      name: collection.name,
+      slug: collection.slug,
+      description: collection.description || '',
+      image: collection.image || '',
+      order: collection.order || 0
     });
     setDialogOpen(true);
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this category?')) return;
+    if (!confirm('Are you sure you want to delete this collection? This will also delete all categories inside it.')) return;
 
     try {
-      const res = await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/collections?id=${id}`, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        fetchData();
+        fetchCollections();
       } else {
-        alert(data.error || 'Failed to delete category');
+        alert(data.error || 'Failed to delete collection');
       }
     } catch (error) {
-      alert('Failed to delete category');
+      alert('Failed to delete collection');
     }
   };
 
   const openNewDialog = () => {
-    setEditingCategory(null);
-    setFormData({ name: '', slug: '', description: '', image: '', parentId: collections[0]?.id || '' });
+    setEditingCollection(null);
+    setFormData({ name: '', slug: '', description: '', image: '', order: collections.length + 1 });
     setDialogOpen(true);
-  };
-
-  const filteredCategories = filterCollection === 'all' 
-    ? categories 
-    : categories.filter(cat => cat.parentId === filterCollection);
-
-  const getCollectionName = (parentId) => {
-    const collection = collections.find(c => c.id === parentId);
-    return collection?.name || 'Unknown';
   };
 
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Categories</h1>
+        <h1 className="text-3xl font-bold">Collections</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openNewDialog} disabled={collections.length === 0}>
+            <Button onClick={openNewDialog}>
               <Plus className="h-4 w-4 mr-2" />
-              New Category
+              New Collection
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingCategory ? 'Edit Category' : 'New Category'}</DialogTitle>
+              <DialogTitle>{editingCollection ? 'Edit Collection' : 'New Collection'}</DialogTitle>
               <DialogDescription>
-                {editingCategory ? 'Update category information' : 'Create a new category inside a collection'}
+                {editingCollection ? 'Update collection information' : 'Create a new collection (super category)'}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="collection">Collection *</Label>
-                <Select
-                  value={formData.parentId}
-                  onValueChange={(value) => setFormData({ ...formData, parentId: value })}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a collection" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {collections.map((collection) => (
-                      <SelectItem key={collection.id} value={collection.id}>
-                        {collection.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div>
                 <Label htmlFor="name">Name *</Label>
                 <Input
@@ -214,7 +166,7 @@ export default function AdminCategoriesPage() {
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   required
-                  placeholder="e.g. Animals, Mandalas, Nature"
+                  placeholder="e.g. Coloring Pages, Calendars, Bookshop"
                 />
               </div>
 
@@ -235,13 +187,24 @@ export default function AdminCategoriesPage() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Brief description of this category"
+                  placeholder="Brief description of this collection"
                   rows={3}
                 />
               </div>
 
               <div>
-                <Label htmlFor="image">Category Image</Label>
+                <Label htmlFor="order">Display Order</Label>
+                <Input
+                  id="order"
+                  type="number"
+                  value={formData.order}
+                  onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                  placeholder="1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="image">Collection Image</Label>
                 <Input
                   id="image"
                   type="file"
@@ -259,7 +222,7 @@ export default function AdminCategoriesPage() {
 
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1">
-                  {editingCategory ? 'Update' : 'Create'}
+                  {editingCollection ? 'Update' : 'Create'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                   Cancel
@@ -270,71 +233,38 @@ export default function AdminCategoriesPage() {
         </Dialog>
       </div>
 
-      {collections.length === 0 && (
-        <Card className="mb-4">
-          <CardContent className="py-6">
-            <p className="text-muted-foreground text-center">
-              Please create at least one collection before adding categories.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Filter by Collection */}
-      {collections.length > 0 && (
-        <div className="mb-6">
-          <Label>Filter by Collection</Label>
-          <Select value={filterCollection} onValueChange={setFilterCollection}>
-            <SelectTrigger className="w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Collections</SelectItem>
-              {collections.map((collection) => (
-                <SelectItem key={collection.id} value={collection.id}>
-                  {collection.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
       {loading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : filteredCategories.length > 0 ? (
+      ) : collections.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCategories.map((category) => (
-            <Card key={category.id}>
+          {collections.map((collection) => (
+            <Card key={collection.id}>
               <CardHeader>
-                {category.image && (
+                {collection.image && (
                   <div className="mb-2 aspect-video relative rounded overflow-hidden bg-muted">
-                    <img src={category.image} alt={category.name} className="object-cover w-full h-full" />
+                    <img src={collection.image} alt={collection.name} className="object-cover w-full h-full" />
                   </div>
                 )}
                 <CardTitle className="flex items-center gap-2">
-                  <FolderOpen className="h-5 w-5 text-primary" />
-                  {category.name}
+                  <Library className="h-5 w-5 text-primary" />
+                  {collection.name}
                 </CardTitle>
-                <p className="text-xs text-blue-600 font-medium">
-                  Collection: {getCollectionName(category.parentId)}
-                </p>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                  {category.description || 'No description'}
+                  {collection.description || 'No description'}
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  {category._count?.products || 0} products
+                  {collection._count?.children || 0} categories • Order: {collection.order}
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleEdit(category)}>
+                  <Button size="sm" variant="outline" onClick={() => handleEdit(collection)}>
                     <Edit className="h-4 w-4 mr-1" />
                     Edit
                   </Button>
-                  <Button size="sm" variant="destructive" onClick={() => handleDelete(category.id)}>
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(collection.id)}>
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete
                   </Button>
@@ -346,14 +276,12 @@ export default function AdminCategoriesPage() {
       ) : (
         <Card>
           <CardContent className="text-center py-20">
-            <FolderOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">No categories yet</p>
-            {collections.length > 0 && (
-              <Button onClick={openNewDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Category
-              </Button>
-            )}
+            <Library className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">No collections yet</p>
+            <Button onClick={openNewDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create First Collection
+            </Button>
           </CardContent>
         </Card>
       )}

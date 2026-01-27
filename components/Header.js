@@ -34,22 +34,22 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-3">
-            <Link href="/category/coloring-pages">
+            <Link href="/collection/coloring-pages">
               <Button className="bg-blue-500 hover:bg-blue-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
                 🎨 Coloring Pages
               </Button>
             </Link>
-            <Link href="/category/calendars">
+            <Link href="/collection/calendars">
               <Button className="bg-green-500 hover:bg-green-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
                 📅 Calendars
               </Button>
             </Link>
-            <Link href="/category/printables">
+            <Link href="/collection/printables">
               <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
                 📄 Printables
               </Button>
             </Link>
-            <Link href="/ebooks">
+            <Link href="/collection/bookshop">
               <Button className="bg-purple-500 hover:bg-purple-600 text-white font-bold text-base rounded-full h-11 px-6 shadow-md">
                 📚 Book Shop
               </Button>
@@ -83,7 +83,7 @@ export default function Header() {
         {mobileMenuOpen && (
           <nav className="md:hidden py-4 space-y-3 pb-6">
             <Link
-              href="/category/coloring-pages"
+              href="/collection/coloring-pages"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -92,7 +92,7 @@ export default function Header() {
               </Button>
             </Link>
             <Link
-              href="/category/calendars"
+              href="/collection/calendars"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -101,7 +101,7 @@ export default function Header() {
               </Button>
             </Link>
             <Link
-              href="/category/printables"
+              href="/collection/printables"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -110,7 +110,7 @@ export default function Header() {
               </Button>
             </Link>
             <Link
-              href="/ebooks"
+              href="/collection/bookshop"
               className="block"
               onClick={() => setMobileMenuOpen(false)}
             >
