@@ -303,6 +303,54 @@ export default async function Home() {
         </section>
       )}
 
+      {/* COLLECTION 4: BOOKSHOP CATEGORIES */}
+      {collections[3] && collections[3].categories && (
+        <section className="container mx-auto px-4 mb-16">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-8 shadow-2xl mb-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+              <h2 className="text-3xl md:text-5xl font-black text-white text-center">
+                {collections[3].name} Categories
+              </h2>
+              <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
+            </div>
+            <p className="text-center text-white font-bold text-lg md:text-xl">
+              Browse our collection of free and premium eBooks!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 md:gap-6">
+            {collections[3].categories.map((category, idx) => {
+              const colors = ['indigo', 'purple', 'blue', 'pink', 'violet', 'fuchsia'];
+              const color = colors[idx % colors.length];
+              
+              return (
+                <Link key={category.id} href={`/category/${category.slug}`}>
+                  <div className={`bg-white rounded-2xl p-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer border-4 border-${color}-400`}>
+                    <div className="aspect-square bg-gradient-to-br from-${color}-100 to-${color}-200 rounded-xl mb-3 flex items-center justify-center">
+                      <span className="text-5xl">{['📖', '🧒', '📚', '🎨', '🍳', '💪', '📈', '🔮', '💕', '🎭', '🌍', '📓'][idx]}</span>
+                    </div>
+                    <h3 className="font-black text-center text-gray-800 text-sm md:text-base">
+                      {category.name}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* See More Button */}
+          <div className="text-center mt-10">
+            <Link href={`/collection/${collections[3].slug}`}>
+              <Button size="lg" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-black text-xl md:text-2xl py-6 md:py-8 px-8 md:px-12 rounded-full shadow-2xl border-4 border-white transform hover:scale-110 transition-all">
+                <Sparkles className="mr-2 h-6 w-6" />
+                See More {collections[3].name}
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/* Features Section */}
       <section className="container mx-auto px-4 pb-16">
         <div className="bg-white rounded-3xl p-8 md:p-12 shadow-2xl border-4 border-purple-300">
