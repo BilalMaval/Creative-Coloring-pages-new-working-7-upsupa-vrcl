@@ -227,3 +227,22 @@ model CartItem {
   @@index([userId])
   @@map("cart_items")
 }
+
+// Product Reviews
+model Review {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rating      Int      // 1-5 stars
+  title       String?
+  comment     String?  @db.Text
+  authorName  String   @map("author_name")
+  authorEmail String?  @map("author_email")
+  isVerified  Boolean  @default(false) @map("is_verified")
+  isApproved  Boolean  @default(true) @map("is_approved")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@map("reviews")
+}
