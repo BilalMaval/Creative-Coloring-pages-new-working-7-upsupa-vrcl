@@ -109,7 +109,7 @@ export async function POST(request) {
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { id, title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree } = body;
+    const { id, title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree, gallery, printLength, language, dimensions, customFields } = body;
     
     if (!id) {
       return NextResponse.json(
@@ -129,6 +129,11 @@ export async function PUT(request) {
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (price !== undefined) updateData.price = price;
     if (isFree !== undefined) updateData.isFree = isFree;
+    if (gallery !== undefined) updateData.gallery = gallery;
+    if (printLength !== undefined) updateData.printLength = printLength;
+    if (language !== undefined) updateData.language = language;
+    if (dimensions !== undefined) updateData.dimensions = dimensions;
+    if (customFields !== undefined) updateData.customFields = customFields;
     
     const updatedProduct = await prisma.product.update({
       where: { id },
