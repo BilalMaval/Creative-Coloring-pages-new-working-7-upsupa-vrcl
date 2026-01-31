@@ -54,12 +54,31 @@ async function getCategoryData(slug) {
       orderBy: [
         { isFeatured: 'desc' },
         { createdAt: 'desc' }
-      ]
+      ],
+      include: {
+        reviews: {
+          where: { isApproved: true },
+          select: { rating: true }
+        }
+      }
+    });
+    
+    // Calculate average rating for each product
+    const productsWithRating = products.map(product => {
+      const ratings = product.reviews || [];
+      const avgRating = ratings.length > 0 
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
+        : 0;
+      return {
+        ...product,
+        averageRating: Math.round(avgRating * 10) / 10,
+        reviewCount: ratings.length
+      };
     });
     
     return {
       category: JSON.parse(JSON.stringify(category)),
-      products: JSON.parse(JSON.stringify(products))
+      products: JSON.parse(JSON.stringify(productsWithRating))
     };
   } catch (error) {
     console.error('Error fetching category:', error);
