@@ -23,8 +23,25 @@ export async function GET(request) {
       take: limit,
       orderBy: latest ? { createdAt: 'desc' } : { title: 'asc' },
       include: {
-        category: true
+        category: true,
+        reviews: {
+          where: { isApproved: true },
+          select: { rating: true }
+        }
       }
+    });
+    
+    // Calculate average rating for each product
+    const itemsWithRating = items.map(item => {
+      const ratings = item.reviews || [];
+      const avgRating = ratings.length > 0 
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length 
+        : 0;
+      return {
+        ...item,
+        averageRating: Math.round(avgRating * 10) / 10,
+        reviewCount: ratings.length
+      };
     });
     
     return NextResponse.json({
