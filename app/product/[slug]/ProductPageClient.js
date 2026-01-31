@@ -6,6 +6,9 @@ import { ArrowLeft, Tag, Calendar, Eye, Heart, Share2, Download } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DownloadButton from '@/components/DownloadButton';
+import ReviewSection from '@/components/ReviewSection';
+import PhotoGallery from '@/components/PhotoGallery';
+import BookParameters from '@/components/BookParameters';
 
 export default function ProductPageClient({ product, relatedProducts, gradient }) {
   const formattedDate = new Date(product.createdAt).toLocaleDateString('en-US', {
@@ -13,6 +16,11 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
     month: 'long',
     day: 'numeric'
   });
+
+  // Check if this is a Bookshop or Printables product (for gallery)
+  const parentSlug = product.category?.parent?.slug;
+  const showGallery = parentSlug === 'bookshop' || parentSlug === 'printables';
+  const showBookParams = parentSlug === 'bookshop';
 
   return (
     <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
@@ -67,8 +75,17 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
               )}
             </div>
             
+            {/* Photo Gallery for Printables and Bookshop */}
+            {showGallery && (
+              <PhotoGallery 
+                images={product.gallery || []} 
+                mainImage={product.webpPath}
+                title={product.title}
+              />
+            )}
+            
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="text-center bg-blue-50 rounded-xl p-3">
                 <Download className="h-6 w-6 text-blue-600 mx-auto mb-1" />
                 <p className="text-2xl font-black text-gray-800">{product.downloads || 0}</p>
@@ -160,6 +177,9 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
               </div>
             </div>
 
+            {/* Book Parameters for Bookshop products */}
+            {showBookParams && <BookParameters product={product} />}
+
             {/* Features Card */}
             <Card className="shadow-xl">
               <CardContent className="p-6">
@@ -185,6 +205,11 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mb-12">
+          <ReviewSection productId={product.id} productSlug={product.slug} />
         </div>
 
         {/* Related Products */}
