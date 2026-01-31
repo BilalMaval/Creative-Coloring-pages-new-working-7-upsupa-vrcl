@@ -569,14 +569,15 @@ export default function AdminProductsPage() {
               {/* Photo Gallery - For Printables and Bookshop */}
               {isPrintablesOrBookshopSelected && (
                 <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-                  <Label className="text-blue-800 font-bold mb-3 block">📷 Photo Gallery</Label>
+                  <Label className="text-blue-800 font-bold mb-3 block">📷 Photo Gallery (Multiple Images)</Label>
                   <Input
                     type="file"
                     accept="image/*"
+                    multiple
                     onChange={handleGalleryUpload}
                     disabled={uploading.gallery}
                   />
-                  {uploading.gallery && <p className="text-sm text-muted-foreground mt-2">Uploading...</p>}
+                  {uploading.gallery && <p className="text-sm text-muted-foreground mt-2">Uploading images...</p>}
                   
                   {formData.gallery.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3">
@@ -595,7 +596,7 @@ export default function AdminProductsPage() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    Add additional images for the product gallery
+                    Select multiple images at once (hold Ctrl/Cmd to select multiple files)
                   </p>
                 </div>
               )}
