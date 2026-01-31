@@ -213,6 +213,12 @@ export default async function CategoryPage({ params }) {
                     <h3 className="font-black text-center text-gray-800 text-xs md:text-sm line-clamp-2 mb-1">
                       {product.title}
                     </h3>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <StarRating rating={product.averageRating || 0} />
+                      {product.reviewCount > 0 && (
+                        <span className="text-xs text-gray-500">({product.reviewCount})</span>
+                      )}
+                    </div>
                     <div className="flex items-center justify-center gap-1 text-xs text-gray-600">
                       <Download className="h-3 w-3" />
                       <span>{product.downloads || 0}</span>
