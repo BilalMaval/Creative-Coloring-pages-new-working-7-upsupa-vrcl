@@ -165,33 +165,51 @@ export default function AdminProductsPage() {
   };
 
   const handleGalleryUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     setUploading({ ...uploading, gallery: true });
+    
+    const uploadedUrls = [];
+    
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-      uploadFormData.append('type', 'image');
+      // Upload all files
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('type', 'image');
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: uploadFormData
-      });
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData
+        });
 
-      const data = await res.json();
-      if (data.success) {
+        const data = await res.json();
+        if (data.success) {
+          uploadedUrls.push(data.url);
+        } else {
+          console.error(`Failed to upload ${file.name}:`, data.error);
+        }
+      }
+      
+      // Add all uploaded URLs to gallery
+      if (uploadedUrls.length > 0) {
         setFormData(prev => ({
           ...prev,
-          gallery: [...prev.gallery, data.url]
+          gallery: [...prev.gallery, ...uploadedUrls]
         }));
-      } else {
-        alert(data.error || 'Upload failed');
+      }
+      
+      if (uploadedUrls.length < files.length) {
+        alert(`Uploaded ${uploadedUrls.length} of ${files.length} images`);
       }
     } catch (error) {
       alert('Upload failed');
     } finally {
       setUploading({ ...uploading, gallery: false });
+      // Reset the input
+      e.target.value = '';
     }
   };
 
