@@ -252,3 +252,15 @@ model Review {
   @@index([productId])
   @@map("reviews")
 }
+
+// Static Pages (About, Privacy, Terms, etc.)
+model Page {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  body      String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("pages")
+}
