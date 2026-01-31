@@ -51,7 +51,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree } = body;
+    const { title, slug, description, tags, image, pdfPath, webpPath, categoryId, price, isFree, gallery, printLength, language, dimensions, customFields } = body;
     
     if (!title || !slug || !categoryId) {
       return NextResponse.json(
@@ -83,6 +83,11 @@ export async function POST(request) {
         categoryId,
         price: price || 0,
         isFree: isFree !== undefined ? isFree : true,
+        gallery: gallery || [],
+        printLength: printLength || null,
+        language: language || null,
+        dimensions: dimensions || null,
+        customFields: customFields || null,
         isActive: true,
         downloads: 0
       }
