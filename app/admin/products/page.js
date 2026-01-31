@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit, Trash2, Loader2, Package } from 'lucide-react';
+import { Plus, Edit, Trash2, Loader2, Package, Star, X, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
@@ -19,7 +19,7 @@ export default function AdminProductsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [uploading, setUploading] = useState({ image: false, pdf: false });
+  const [uploading, setUploading] = useState({ image: false, pdf: false, gallery: false });
   
   // Filter states
   const [filterCollection, setFilterCollection] = useState('all');
@@ -39,7 +39,11 @@ export default function AdminProductsPage() {
     pdfPath: '',
     categoryId: '',
     price: '0',
-    isFree: true
+    isFree: true,
+    gallery: [],
+    printLength: '',
+    language: '',
+    dimensions: ''
   });
 
   useEffect(() => {
@@ -57,6 +61,17 @@ export default function AdminProductsPage() {
       setAvailableCategories([]);
     }
   }, [selectedCollections, allCategories]);
+
+  // Check if Bookshop or Printables is selected
+  const isBookshopSelected = selectedCollections.some(colId => {
+    const col = collections.find(c => c.id === colId);
+    return col?.slug === 'bookshop';
+  });
+  
+  const isPrintablesOrBookshopSelected = selectedCollections.some(colId => {
+    const col = collections.find(c => c.id === colId);
+    return col?.slug === 'bookshop' || col?.slug === 'printables';
+  });
 
   const fetchData = async () => {
     try {
@@ -91,7 +106,6 @@ export default function AdminProductsPage() {
   const handleCollectionToggle = (collectionId) => {
     setSelectedCollections(prev => {
       if (prev.includes(collectionId)) {
-        // Remove collection and its categories from selection
         const newCollections = prev.filter(id => id !== collectionId);
         setSelectedCategories(cats => 
           cats.filter(catId => {
@@ -114,7 +128,6 @@ export default function AdminProductsPage() {
         return [...prev, categoryId];
       }
     });
-    // Set the first selected category as the main categoryId
     if (!formData.categoryId || !selectedCategories.includes(formData.categoryId)) {
       setFormData(prev => ({ ...prev, categoryId: categoryId }));
     }
@@ -151,6 +164,44 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleGalleryUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading({ ...uploading, gallery: true });
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('type', 'image');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: uploadFormData
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setFormData(prev => ({
+          ...prev,
+          gallery: [...prev.gallery, data.url]
+        }));
+      } else {
+        alert(data.error || 'Upload failed');
+      }
+    } catch (error) {
+      alert('Upload failed');
+    } finally {
+      setUploading({ ...uploading, gallery: false });
+    }
+  };
+
+  const removeGalleryImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      gallery: prev.gallery.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -164,7 +215,6 @@ export default function AdminProductsPage() {
       const method = editingProduct ? 'PUT' : 'POST';
       const tags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       
-      // Use the first selected category as the main category
       const mainCategoryId = selectedCategories[0];
       
       const body = {
@@ -173,7 +223,10 @@ export default function AdminProductsPage() {
         categoryId: mainCategoryId,
         price: parseFloat(formData.price) || 0,
         isFree: formData.isFree,
-        // Store additional categories in customFields
+        gallery: formData.gallery,
+        printLength: formData.printLength || null,
+        language: formData.language || null,
+        dimensions: formData.dimensions || null,
         customFields: {
           additionalCategories: selectedCategories.slice(1),
           collections: selectedCollections
@@ -214,7 +267,11 @@ export default function AdminProductsPage() {
       pdfPath: '',
       categoryId: '',
       price: '0',
-      isFree: true
+      isFree: true,
+      gallery: [],
+      printLength: '',
+      language: '',
+      dimensions: ''
     });
     setSelectedCollections([]);
     setSelectedCategories([]);
@@ -223,11 +280,9 @@ export default function AdminProductsPage() {
   const handleEdit = (product) => {
     setEditingProduct(product);
     
-    // Get the collection of the category
     const category = allCategories.find(c => c.id === product.categoryId);
     const collectionId = category?.parentId;
     
-    // Get additional categories from customFields
     const additionalCategories = product.customFields?.additionalCategories || [];
     const storedCollections = product.customFields?.collections || (collectionId ? [collectionId] : []);
     
@@ -243,7 +298,11 @@ export default function AdminProductsPage() {
       pdfPath: product.pdfPath || '',
       categoryId: product.categoryId,
       price: String(product.price || 0),
-      isFree: product.isFree !== false
+      isFree: product.isFree !== false,
+      gallery: product.gallery || [],
+      printLength: product.printLength || '',
+      language: product.language || '',
+      dimensions: product.dimensions || ''
     });
     setDialogOpen(true);
   };
@@ -436,6 +495,42 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
+              {/* Book Parameters - Only for Bookshop */}
+              {isBookshopSelected && (
+                <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
+                  <Label className="text-purple-800 font-bold mb-3 block">📚 Book Parameters</Label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="printLength">Print Length</Label>
+                      <Input
+                        id="printLength"
+                        value={formData.printLength}
+                        onChange={(e) => setFormData({ ...formData, printLength: e.target.value })}
+                        placeholder="e.g. 150 pages"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="language">Language</Label>
+                      <Input
+                        id="language"
+                        value={formData.language}
+                        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                        placeholder="e.g. English"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dimensions">Dimensions</Label>
+                      <Input
+                        id="dimensions"
+                        value={formData.dimensions}
+                        onChange={(e) => setFormData({ ...formData, dimensions: e.target.value })}
+                        placeholder="e.g. 8.5 x 11 in"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="image">Preview Image *</Label>
                 <Input
@@ -452,6 +547,40 @@ export default function AdminProductsPage() {
                 )}
                 {uploading.image && <p className="text-sm text-muted-foreground mt-2">Uploading image...</p>}
               </div>
+
+              {/* Photo Gallery - For Printables and Bookshop */}
+              {isPrintablesOrBookshopSelected && (
+                <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <Label className="text-blue-800 font-bold mb-3 block">📷 Photo Gallery</Label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleGalleryUpload}
+                    disabled={uploading.gallery}
+                  />
+                  {uploading.gallery && <p className="text-sm text-muted-foreground mt-2">Uploading...</p>}
+                  
+                  {formData.gallery.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {formData.gallery.map((img, index) => (
+                        <div key={index} className="relative">
+                          <img src={img} alt={`Gallery ${index + 1}`} className="h-16 w-16 object-cover rounded" />
+                          <button
+                            type="button"
+                            onClick={() => removeGalleryImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Add additional images for the product gallery
+                  </p>
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="pdf">PDF/File *</Label>
@@ -563,6 +692,11 @@ export default function AdminProductsPage() {
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">${product.price}</span>
                   )}
                   <span className="text-xs text-muted-foreground">{product.downloads || 0} downloads</span>
+                  {product.gallery?.length > 0 && (
+                    <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full font-medium flex items-center gap-1">
+                      <ImageIcon className="h-3 w-3" /> {product.gallery.length}
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
