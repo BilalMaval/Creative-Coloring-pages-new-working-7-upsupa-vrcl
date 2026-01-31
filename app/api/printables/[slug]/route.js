@@ -1,66 +1,42 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request, { params }) {
   try {
     const { slug } = params;
     
-    const printables = await getCollection('printables');
-    const printable = await printables.findOne({ slug });
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: {
+          include: {
+            parent: true
+          }
+        }
+      }
+    });
     
-    if (!printable) {
+    if (!product) {
       return NextResponse.json(
-        { success: false, error: 'Printable not found' },
+        { success: false, error: 'Product not found' },
         { status: 404 }
       );
     }
     
-    // Get category info
-    const categories = await getCollection('categories');
-    const category = await categories.findOne({ _id: printable.category_id });
-    
-    // Get related printables from same category
-    const related = await printables
-      .find({ category_id: printable.category_id, _id: { $ne: printable._id } })
-      .limit(4)
-      .toArray();
+    // Increment views
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { views: { increment: 1 } }
+    });
     
     return NextResponse.json({
       success: true,
-      data: {
-        printable,
-        category,
-        related
-      }
+      data: product
     });
   } catch (error) {
-    console.error('Error fetching printable:', error);
+    console.error('Error fetching product:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch printable' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request, { params }) {
-  try {
-    const { slug } = params;
-    
-    // Increment download count
-    const printables = await getCollection('printables');
-    await printables.updateOne(
-      { slug },
-      { $inc: { downloads: 1 } }
-    );
-    
-    return NextResponse.json({
-      success: true,
-      message: 'Download count incremented'
-    });
-  } catch (error) {
-    console.error('Error incrementing download:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to increment download' },
+      { success: false, error: 'Failed to fetch product' },
       { status: 500 }
     );
   }

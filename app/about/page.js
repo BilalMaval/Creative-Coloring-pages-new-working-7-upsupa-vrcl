@@ -1,4 +1,4 @@
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata = genMeta({
@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic';
 
 async function getPageContent() {
   try {
-    const pages = await getCollection('pages');
-    const page = await pages.findOne({ slug: 'about' });
+    const page = await prisma.page.findUnique({
+      where: { slug: 'about' }
+    });
     return page ? JSON.parse(JSON.stringify(page)) : null;
   } catch (error) {
     console.error('Error fetching about page:', error);
@@ -36,7 +37,7 @@ export default async function AboutPage() {
           </div>
         ) : (
           <div className="prose prose-slate dark:prose-invert max-w-none">
-            <h2 className="text-2xl font-bold mb-4">Welcome to Free Printable Coloring Pages</h2>
+            <h2 className="text-2xl font-bold mb-4">Welcome to Creative Coloring Pages</h2>
             
             <p className="text-muted-foreground mb-4">
               We are passionate about bringing joy, creativity, and relaxation to people of all ages through the art of coloring. Our mission is simple: to provide a comprehensive collection of free, high-quality printable coloring pages and mandala designs that anyone can download and enjoy.

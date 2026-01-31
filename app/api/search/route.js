@@ -1,46 +1,41 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q') || '';
-    const category = searchParams.get('category');
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '12');
+    const query = searchParams.get('q');
     
-    const printables = await getCollection('printables');
-    
-    let searchQuery = {};
-    
-    if (query) {
-      searchQuery.$text = { $search: query };
+    if (!query) {
+      return NextResponse.json({
+        success: true,
+        data: []
+      });
     }
     
-    if (category) {
-      searchQuery.category_id = category;
-    }
-    
-    const total = await printables.countDocuments(searchQuery);
-    const skip = (page - 1) * limit;
-    
-    const items = await printables
-      .find(searchQuery)
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+    const products = await prisma.product.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { tags: { has: query.toLowerCase() } }
+        ]
+      },
+      include: {
+        category: {
+          include: {
+            parent: true
+          }
+        }
+      },
+      take: 50,
+      orderBy: { downloads: 'desc' }
+    });
     
     return NextResponse.json({
       success: true,
-      data: items,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1
-      }
+      data: products
     });
   } catch (error) {
     console.error('Error searching:', error);

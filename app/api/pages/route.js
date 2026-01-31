@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const slug = searchParams.get('slug');
     
-    const pages = await getCollection('pages');
-    
     if (slug) {
-      const page = await pages.findOne({ slug });
+      const page = await prisma.page.findUnique({
+        where: { slug }
+      });
       return NextResponse.json({
         success: true,
         data: page
       });
     }
     
-    const allPages = await pages.find({}).toArray();
+    const allPages = await prisma.page.findMany();
     return NextResponse.json({
       success: true,
       data: allPages
@@ -42,22 +42,24 @@ export async function POST(request) {
       );
     }
     
-    const pages = await getCollection('pages');
+    const existing = await prisma.page.findUnique({
+      where: { slug }
+    });
     
-    const existing = await pages.findOne({ slug });
     if (existing) {
       // Update
-      await pages.updateOne(
-        { slug },
-        { $set: { title, body: content || '' } }
-      );
+      await prisma.page.update({
+        where: { slug },
+        data: { title, body: content || '' }
+      });
     } else {
-      // Insert
-      await pages.insertOne({
-        slug,
-        title,
-        body: content || '',
-        createdAt: new Date()
+      // Create
+      await prisma.page.create({
+        data: {
+          slug,
+          title,
+          body: content || ''
+        }
       });
     }
     

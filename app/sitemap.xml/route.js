@@ -1,23 +1,30 @@
-import { NextResponse } from 'next/server';
-import { getCollection } from '@/lib/db';
+import prisma from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://env-revival.preview.emergentagent.com';
+  
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Fetch all active products
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      select: { slug: true, updatedAt: true }
+    });
     
-    const categories = await getCollection('categories');
-    const printables = await getCollection('printables');
+    // Fetch all active categories
+    const categories = await prisma.category.findMany({
+      where: { isActive: true },
+      select: { slug: true, parentId: true }
+    });
     
-    const allCategories = await categories.find({}).toArray();
-    const allPrintables = await printables.find({}).toArray();
-    
+    // Static pages
     const staticPages = [
       { url: '', changefreq: 'daily', priority: '1.0' },
-      { url: '/about', changefreq: 'monthly', priority: '0.8' },
-      { url: '/contact', changefreq: 'monthly', priority: '0.8' },
+      { url: '/about', changefreq: 'monthly', priority: '0.6' },
+      { url: '/privacy-policy', changefreq: 'monthly', priority: '0.3' },
+      { url: '/terms-of-service', changefreq: 'monthly', priority: '0.3' },
       { url: '/search', changefreq: 'weekly', priority: '0.7' },
-      { url: '/privacy-policy', changefreq: 'yearly', priority: '0.5' },
-      { url: '/terms-of-service', changefreq: 'yearly', priority: '0.5' }
     ];
     
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -28,30 +35,34 @@ export async function GET() {
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
   </url>`).join('')}
-  ${allCategories.map(cat => `
+  ${categories.filter(c => c.parentId === null).map(collection => `
+  <url>
+    <loc>${baseUrl}/collection/${collection.slug}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('')}
+  ${categories.filter(c => c.parentId !== null).map(cat => `
   <url>
     <loc>${baseUrl}/category/${cat.slug}</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.7</priority>
   </url>`).join('')}
-  ${allPrintables.map(printable => `
+  ${products.map(product => `
   <url>
-    <loc>${baseUrl}/printable/${printable.slug}</loc>
-    <lastmod>${new Date(printable.createdAt).toISOString()}</lastmod>
+    <loc>${baseUrl}/product/${product.slug}</loc>
+    <lastmod>${new Date(product.updatedAt).toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.6</priority>
   </url>`).join('')}
 </urlset>`;
     
-    return new NextResponse(sitemap, {
-      status: 200,
+    return new Response(sitemap, {
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600'
-      }
+      },
     });
   } catch (error) {
     console.error('Error generating sitemap:', error);
-    return new NextResponse('Error generating sitemap', { status: 500 });
+    return new Response('Error generating sitemap', { status: 500 });
   }
 }
