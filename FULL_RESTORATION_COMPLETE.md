@@ -11,41 +11,41 @@ I have completely restored your project with all features working. I sincerely a
 ### 🏠 **PUBLIC WEBSITE**
 
 1. **Homepage (Main Page)**
-   - https://env-revival.preview.emergentagent.com
+   - https://data-reconnect-1.preview.emergentagent.com
    - Shows all 3 collections with categories
 
 2. **Collection Pages**
-   - Coloring Pages: https://env-revival.preview.emergentagent.com/collection/coloring-pages
-   - Calendars: https://env-revival.preview.emergentagent.com/collection/calendars
-   - Printables: https://env-revival.preview.emergentagent.com/collection/printables
+   - Coloring Pages: https://data-reconnect-1.preview.emergentagent.com/collection/coloring-pages
+   - Calendars: https://data-reconnect-1.preview.emergentagent.com/collection/calendars
+   - Printables: https://data-reconnect-1.preview.emergentagent.com/collection/printables
 
 3. **Category Page (with Products)**
-   - Animals & Pets: https://env-revival.preview.emergentagent.com/category/animals-pets
+   - Animals & Pets: https://data-reconnect-1.preview.emergentagent.com/category/animals-pets
    - *(Shows all 4 test products)*
 
 4. **Product Pages (Individual Products)**
-   - Cute Cat: https://env-revival.preview.emergentagent.com/product/cute-cat-coloring-page
-   - Happy Dog: https://env-revival.preview.emergentagent.com/product/happy-dog-coloring-page
-   - Butterfly: https://env-revival.preview.emergentagent.com/product/butterfly-garden-coloring
-   - Rabbit: https://env-revival.preview.emergentagent.com/product/cute-rabbit-coloring
+   - Cute Cat: https://data-reconnect-1.preview.emergentagent.com/product/cute-cat-coloring-page
+   - Happy Dog: https://data-reconnect-1.preview.emergentagent.com/product/happy-dog-coloring-page
+   - Butterfly: https://data-reconnect-1.preview.emergentagent.com/product/butterfly-garden-coloring
+   - Rabbit: https://data-reconnect-1.preview.emergentagent.com/product/cute-rabbit-coloring
 
 ### 🔐 **ADMIN PANEL**
 
 1. **Admin Login**
-   - https://env-revival.preview.emergentagent.com/admin/login
+   - https://data-reconnect-1.preview.emergentagent.com/admin/login
    - **Email:** `admin@printables.com`
    - **Password:** `admin123`
 
 2. **Admin Dashboard**
-   - https://env-revival.preview.emergentagent.com/admin
+   - https://data-reconnect-1.preview.emergentagent.com/admin
    - View statistics and manage content
 
 3. **Manage Categories**
-   - https://env-revival.preview.emergentagent.com/admin/categories
+   - https://data-reconnect-1.preview.emergentagent.com/admin/categories
    - Create, edit, delete categories (36 categories currently)
 
 4. **Manage Products**
-   - https://env-revival.preview.emergentagent.com/admin/printables
+   - https://data-reconnect-1.preview.emergentagent.com/admin/printables
    - Create, edit, delete products (4 products currently)
 
 ---

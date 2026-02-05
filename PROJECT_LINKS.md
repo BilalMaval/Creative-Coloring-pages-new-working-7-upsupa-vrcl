@@ -2,28 +2,28 @@
 
 ## 🚀 Quick Start
 
-**Live Website:** https://env-revival.preview.emergentagent.com
+**Live Website:** https://data-reconnect-1.preview.emergentagent.com
 
 ## 📋 All Working Links
 
 ### Public Website
-- **Homepage:** https://env-revival.preview.emergentagent.com
-- **Collection Page (Coloring Pages):** https://env-revival.preview.emergentagent.com/collection/coloring-pages
-- **Collection Page (Calendars):** https://env-revival.preview.emergentagent.com/collection/calendars
-- **Collection Page (Printables):** https://env-revival.preview.emergentagent.com/collection/printables
-- **Category Page (Animals & Pets):** https://env-revival.preview.emergentagent.com/category/animals-pets
-- **Product Page (Cute Cat):** https://env-revival.preview.emergentagent.com/product/cute-cat-coloring-page
-- **Product Page (Dog):** https://env-revival.preview.emergentagent.com/product/happy-dog-coloring-page
-- **Product Page (Butterfly):** https://env-revival.preview.emergentagent.com/product/butterfly-garden-coloring
-- **Product Page (Rabbit):** https://env-revival.preview.emergentagent.com/product/cute-rabbit-coloring
+- **Homepage:** https://data-reconnect-1.preview.emergentagent.com
+- **Collection Page (Coloring Pages):** https://data-reconnect-1.preview.emergentagent.com/collection/coloring-pages
+- **Collection Page (Calendars):** https://data-reconnect-1.preview.emergentagent.com/collection/calendars
+- **Collection Page (Printables):** https://data-reconnect-1.preview.emergentagent.com/collection/printables
+- **Category Page (Animals & Pets):** https://data-reconnect-1.preview.emergentagent.com/category/animals-pets
+- **Product Page (Cute Cat):** https://data-reconnect-1.preview.emergentagent.com/product/cute-cat-coloring-page
+- **Product Page (Dog):** https://data-reconnect-1.preview.emergentagent.com/product/happy-dog-coloring-page
+- **Product Page (Butterfly):** https://data-reconnect-1.preview.emergentagent.com/product/butterfly-garden-coloring
+- **Product Page (Rabbit):** https://data-reconnect-1.preview.emergentagent.com/product/cute-rabbit-coloring
 
 ### Admin Panel
-- **Admin Login:** https://env-revival.preview.emergentagent.com/admin/login
+- **Admin Login:** https://data-reconnect-1.preview.emergentagent.com/admin/login
   - **Email:** admin@printables.com
   - **Password:** admin123
-- **Admin Dashboard:** https://env-revival.preview.emergentagent.com/admin
-- **Manage Categories:** https://env-revival.preview.emergentagent.com/admin/categories
-- **Manage Products:** https://env-revival.preview.emergentagent.com/admin/printables
+- **Admin Dashboard:** https://data-reconnect-1.preview.emergentagent.com/admin
+- **Manage Categories:** https://data-reconnect-1.preview.emergentagent.com/admin/categories
+- **Manage Products:** https://data-reconnect-1.preview.emergentagent.com/admin/printables
 
 ## 🗄️ Database Information
 
