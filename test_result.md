@@ -102,10 +102,10 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Restore this full-stack project from the private GitHub repository. Use the repository as the single source of truth. Reconnect the PostgreSQL database, restore schema and migrations, fix environment variables if required, and make the app fully runnable."
+user_problem_statement: "Connect project to Supabase and restore data. Add Supabase DATABASE_URL, run Prisma migrations, restore backup, and verify frontend/backend works with persistent data."
 
 backend:
-  - task: "PostgreSQL Database Setup"
+  - task: "Supabase PostgreSQL Database Connection"
     implemented: true
     working: true
     file: "prisma/schema.prisma"
@@ -115,19 +115,19 @@ backend:
     status_history:
         - working: true
         - agent: "main"
-        - comment: "PostgreSQL installed, database created, schema pushed via Prisma"
+        - comment: "Connected to Supabase PostgreSQL via connection pooler (aws-1-ap-southeast-1.pooler.supabase.com:6543)"
 
-  - task: "Database Data Restoration"
+  - task: "Database Data Restoration to Supabase"
     implemented: true
     working: true
-    file: "backups/database_backup_20260119_143405.sql"
+    file: "backups/database_backup_latest.sql"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
         - working: true
         - agent: "main"
-        - comment: "Data restored from backup - 39 categories, 4 products, 1 admin user"
+        - comment: "Data restored to Supabase - 52 categories, 4 products, 12 reviews, 1 admin user"
 
   - task: "Environment Variables Setup"
     implemented: true
@@ -139,7 +139,7 @@ backend:
     status_history:
         - working: true
         - agent: "main"
-        - comment: "Created .env with DATABASE_URL for PostgreSQL connection"
+        - comment: "Created .env with Supabase DATABASE_URL (pooler connection with pgbouncer=true)"
 
   - task: "Admin Authentication"
     implemented: true
