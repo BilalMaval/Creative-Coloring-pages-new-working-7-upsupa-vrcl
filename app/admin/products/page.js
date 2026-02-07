@@ -579,17 +579,26 @@ export default function AdminProductsPage() {
               )}
 
               <div>
-                <Label htmlFor="image">Preview Image *</Label>
+                <Label htmlFor="image" className="flex items-center gap-2">
+                  Preview Image *
+                  {validationErrors.image && <span className="text-red-500 text-xs">({validationErrors.image})</span>}
+                </Label>
                 <Input
                   id="image"
                   type="file"
                   accept="image/*"
                   onChange={(e) => handleFileUpload(e, 'image')}
                   disabled={uploading.image}
+                  className={validationErrors.image ? 'border-red-500' : ''}
                 />
+                <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
+                  <strong>📐 Recommended Dimensions:</strong> 600 x 800 pixels (3:4 aspect ratio)<br/>
+                  <strong>Accepted formats:</strong> JPG, PNG, WebP • <strong>Max size:</strong> 5MB
+                </div>
                 {formData.image && (
-                  <div className="mt-2">
-                    <img src={formData.image} alt="Preview" className="h-32 w-auto rounded" />
+                  <div className="mt-2 flex items-center gap-3">
+                    <img src={formData.image} alt="Preview" className="h-32 w-auto rounded border" />
+                    <span className="text-green-600 text-sm font-medium">✓ Image uploaded</span>
                   </div>
                 )}
                 {uploading.image && <p className="text-sm text-muted-foreground mt-2">Uploading image...</p>}
