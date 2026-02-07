@@ -591,10 +591,12 @@ export default function AdminProductsPage() {
                   disabled={uploading.image}
                   className={validationErrors.image ? 'border-red-500' : ''}
                 />
-                <div className="mt-1 p-2 bg-blue-50 rounded text-xs text-blue-700">
-                  <strong>📐 Recommended Dimensions:</strong> 600 x 800 pixels (3:4 aspect ratio)<br/>
-                  <strong>Accepted formats:</strong> JPG, PNG, WebP • <strong>Max size:</strong> 5MB
-                </div>
+                {validationErrors.image && (
+                  <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                    <strong>📐 Recommended Dimensions:</strong> 600 x 800 pixels (3:4 aspect ratio)<br/>
+                    <strong>Accepted formats:</strong> JPG, PNG, WebP • <strong>Max size:</strong> 5MB
+                  </div>
+                )}
                 {formData.image && (
                   <div className="mt-2 flex items-center gap-3">
                     <img src={formData.image} alt="Preview" className="h-32 w-auto rounded border" />
