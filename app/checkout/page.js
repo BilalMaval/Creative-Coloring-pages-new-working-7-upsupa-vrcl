@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, CreditCard, Lock, ArrowLeft } from 'lucide-react';
+import { CheckCircle, CreditCard, Lock, ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function CheckoutPage() {
@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [completedItems, setCompletedItems] = useState([]);
   const [formData, setFormData] = useState({
     email: '',
     name: ''
@@ -37,6 +38,32 @@ export default function CheckoutPage() {
     }
     setLoading(false);
   }, [router]);
+
+  const updateCart = (newCart) => {
+    setCartItems(newCart);
+    localStorage.setItem('cart', JSON.stringify(newCart));
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    if (newCart.length === 0) {
+      router.push('/cart');
+    }
+  };
+
+  const removeItem = (productId) => {
+    const newCart = cartItems.filter(item => item.id !== productId);
+    updateCart(newCart);
+  };
+
+  const updateQuantity = (productId, delta) => {
+    const newCart = cartItems.map(item => {
+      if (item.id === productId) {
+        const newQty = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    });
+    updateCart(newCart);
+  };
 
   const total = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0) * item.quantity, 0);
 
@@ -65,6 +92,7 @@ export default function CheckoutPage() {
 
       if (data.success) {
         setOrderNumber(data.orderNumber);
+        setCompletedItems([...cartItems]);
         setOrderComplete(true);
         // Clear cart
         localStorage.removeItem('cart');
@@ -107,7 +135,7 @@ export default function CheckoutPage() {
               <div className="bg-green-50 rounded-lg p-6 mb-6">
                 <h3 className="font-semibold mb-3">Your Downloads:</h3>
                 <div className="space-y-2">
-                  {cartItems.map(item => (
+                  {completedItems.map(item => (
                     <div key={item.id} className="flex items-center justify-between p-2 bg-white rounded">
                       <span>{item.title}</span>
                       <Button variant="outline" size="sm" asChild>
@@ -190,7 +218,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" size="lg" disabled={processing}>
+                <Button type="submit" className="w-full" size="lg" disabled={processing || cartItems.length === 0}>
                   {processing ? 'Processing...' : total === 0 ? 'Complete Free Order' : `Pay $${total.toFixed(2)}`}
                 </Button>
 
@@ -203,16 +231,17 @@ export default function CheckoutPage() {
           </Card>
         </div>
 
-        {/* Order Summary */}
+        {/* Order Summary with Edit Capability */}
         <div>
           <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
+              <p className="text-sm text-muted-foreground">You can modify your order below</p>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex gap-3">
+                  <div key={item.id} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
                     <div className="relative w-16 h-16 flex-shrink-0">
                       <Image
                         src={item.image || '/placeholder.png'}
@@ -221,13 +250,43 @@ export default function CheckoutPage() {
                         className="object-cover rounded"
                       />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{item.title}</p>
+                      <p className="text-sm font-semibold mt-1">
+                        {item.isFree || parseFloat(item.price) === 0 ? 'FREE' : `$${(parseFloat(item.price) * item.quantity).toFixed(2)}`}
+                      </p>
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.id, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateQuantity(item.id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <p className="font-semibold">
-                      {parseFloat(item.price) === 0 ? 'FREE' : `$${(parseFloat(item.price) * item.quantity).toFixed(2)}`}
-                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                      onClick={() => removeItem(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
 
@@ -237,6 +296,12 @@ export default function CheckoutPage() {
                     <span>{total === 0 ? 'FREE' : `$${total.toFixed(2)}`}</span>
                   </div>
                 </div>
+                
+                <Link href="/" className="block">
+                  <Button variant="outline" className="w-full" size="sm">
+                    + Add More Items
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
