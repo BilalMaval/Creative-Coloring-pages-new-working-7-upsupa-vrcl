@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, Edit, Trash2, Loader2, Package, Star, X, Image as ImageIcon } from 'lucide-react';
 
 export default function AdminProductsPage() {
@@ -25,8 +26,8 @@ export default function AdminProductsPage() {
   const [filterCollection, setFilterCollection] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   
-  // Form states
-  const [selectedCollections, setSelectedCollections] = useState([]);
+  // Form states - Single collection, multiple categories
+  const [selectedCollection, setSelectedCollection] = useState('');
   const [availableCategories, setAvailableCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   
@@ -39,7 +40,7 @@ export default function AdminProductsPage() {
     pdfPath: '',
     categoryId: '',
     price: '0',
-    isFree: true,
+    pricingType: 'free', // 'free' or 'paid'
     gallery: [],
     printLength: '',
     language: '',
@@ -51,27 +52,27 @@ export default function AdminProductsPage() {
   }, []);
 
   useEffect(() => {
-    // Update available categories when selected collections change
-    if (selectedCollections.length > 0) {
+    // Update available categories when selected collection changes
+    if (selectedCollection) {
       const cats = allCategories.filter(cat => 
-        cat.parentId && selectedCollections.includes(cat.parentId)
+        cat.parentId && cat.parentId === selectedCollection
       );
       setAvailableCategories(cats);
     } else {
       setAvailableCategories([]);
     }
-  }, [selectedCollections, allCategories]);
+  }, [selectedCollection, allCategories]);
 
   // Check if Bookshop or Printables is selected
-  const isBookshopSelected = selectedCollections.some(colId => {
-    const col = collections.find(c => c.id === colId);
+  const isBookshopSelected = () => {
+    const col = collections.find(c => c.id === selectedCollection);
     return col?.slug === 'bookshop';
-  });
+  };
   
-  const isPrintablesOrBookshopSelected = selectedCollections.some(colId => {
-    const col = collections.find(c => c.id === colId);
+  const isPrintablesOrBookshopSelected = () => {
+    const col = collections.find(c => c.id === selectedCollection);
     return col?.slug === 'bookshop' || col?.slug === 'printables';
-  });
+  };
 
   const fetchData = async () => {
     try {
@@ -103,21 +104,9 @@ export default function AdminProductsPage() {
     });
   };
 
-  const handleCollectionToggle = (collectionId) => {
-    setSelectedCollections(prev => {
-      if (prev.includes(collectionId)) {
-        const newCollections = prev.filter(id => id !== collectionId);
-        setSelectedCategories(cats => 
-          cats.filter(catId => {
-            const cat = allCategories.find(c => c.id === catId);
-            return cat && newCollections.includes(cat.parentId);
-          })
-        );
-        return newCollections;
-      } else {
-        return [...prev, collectionId];
-      }
-    });
+  const handleCollectionChange = (collectionId) => {
+    setSelectedCollection(collectionId);
+    setSelectedCategories([]); // Reset categories when collection changes
   };
 
   const handleCategoryToggle = (categoryId) => {
@@ -128,9 +117,6 @@ export default function AdminProductsPage() {
         return [...prev, categoryId];
       }
     });
-    if (!formData.categoryId || !selectedCategories.includes(formData.categoryId)) {
-      setFormData(prev => ({ ...prev, categoryId: categoryId }));
-    }
   };
 
   const handleFileUpload = async (e, type) => {
@@ -173,7 +159,6 @@ export default function AdminProductsPage() {
     const uploadedUrls = [];
     
     try {
-      // Upload all files
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const uploadFormData = new FormData();
@@ -193,7 +178,6 @@ export default function AdminProductsPage() {
         }
       }
       
-      // Add all uploaded URLs to gallery
       if (uploadedUrls.length > 0) {
         setFormData(prev => ({
           ...prev,
@@ -208,7 +192,6 @@ export default function AdminProductsPage() {
       alert('Upload failed');
     } finally {
       setUploading({ ...uploading, gallery: false });
-      // Reset the input
       e.target.value = '';
     }
   };
@@ -223,6 +206,11 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!selectedCollection) {
+      alert('Please select a collection');
+      return;
+    }
+    
     if (selectedCategories.length === 0) {
       alert('Please select at least one category');
       return;
@@ -234,20 +222,22 @@ export default function AdminProductsPage() {
       const tags = formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       
       const mainCategoryId = selectedCategories[0];
+      const isFree = formData.pricingType === 'free';
+      const price = isFree ? 0 : parseFloat(formData.price) || 0;
       
       const body = {
         ...formData,
         tags,
         categoryId: mainCategoryId,
-        price: parseFloat(formData.price) || 0,
-        isFree: formData.isFree,
+        price,
+        isFree,
         gallery: formData.gallery,
         printLength: formData.printLength || null,
         language: formData.language || null,
         dimensions: formData.dimensions || null,
         customFields: {
           additionalCategories: selectedCategories.slice(1),
-          collections: selectedCollections
+          collection: selectedCollection
         }
       };
       
@@ -285,13 +275,13 @@ export default function AdminProductsPage() {
       pdfPath: '',
       categoryId: '',
       price: '0',
-      isFree: true,
+      pricingType: 'free',
       gallery: [],
       printLength: '',
       language: '',
       dimensions: ''
     });
-    setSelectedCollections([]);
+    setSelectedCollection('');
     setSelectedCategories([]);
   };
 
@@ -299,13 +289,14 @@ export default function AdminProductsPage() {
     setEditingProduct(product);
     
     const category = allCategories.find(c => c.id === product.categoryId);
-    const collectionId = category?.parentId;
+    const collectionId = product.customFields?.collection || category?.parentId || '';
     
     const additionalCategories = product.customFields?.additionalCategories || [];
-    const storedCollections = product.customFields?.collections || (collectionId ? [collectionId] : []);
     
-    setSelectedCollections(storedCollections);
+    setSelectedCollection(collectionId);
     setSelectedCategories([product.categoryId, ...additionalCategories]);
+    
+    const isFree = product.isFree !== false;
     
     setFormData({
       title: product.title,
@@ -316,7 +307,7 @@ export default function AdminProductsPage() {
       pdfPath: product.pdfPath || '',
       categoryId: product.categoryId,
       price: String(product.price || 0),
-      isFree: product.isFree !== false,
+      pricingType: isFree ? 'free' : 'paid',
       gallery: product.gallery || [],
       printLength: product.printLength || '',
       language: product.language || '',
@@ -391,55 +382,46 @@ export default function AdminProductsPage() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Collections Selection */}
+              {/* Single Collection Selection */}
               <div>
-                <Label>Select Collections *</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md bg-muted/50">
-                  {collections.map((collection) => (
-                    <div key={collection.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`collection-${collection.id}`}
-                        checked={selectedCollections.includes(collection.id)}
-                        onCheckedChange={() => handleCollectionToggle(collection.id)}
-                      />
-                      <label
-                        htmlFor={`collection-${collection.id}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
+                <Label>Select Collection *</Label>
+                <Select value={selectedCollection} onValueChange={handleCollectionChange}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Choose a collection" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {collections.map((collection) => (
+                      <SelectItem key={collection.id} value={collection.id}>
                         {collection.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Categories Selection */}
-              {selectedCollections.length > 0 && (
+              {/* Multiple Categories Selection */}
+              {selectedCollection && (
                 <div>
-                  <Label>Select Categories *</Label>
+                  <Label>Select Categories * (can select multiple)</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2 p-3 border rounded-md bg-muted/50 max-h-48 overflow-y-auto">
-                    {availableCategories.map((category) => {
-                      const collection = collections.find(c => c.id === category.parentId);
-                      return (
-                        <div key={category.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`category-${category.id}`}
-                            checked={selectedCategories.includes(category.id)}
-                            onCheckedChange={() => handleCategoryToggle(category.id)}
-                          />
-                          <label
-                            htmlFor={`category-${category.id}`}
-                            className="text-sm cursor-pointer"
-                          >
-                            {category.name}
-                            <span className="text-xs text-muted-foreground ml-1">({collection?.name})</span>
-                          </label>
-                        </div>
-                      );
-                    })}
+                    {availableCategories.map((category) => (
+                      <div key={category.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`category-${category.id}`}
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={() => handleCategoryToggle(category.id)}
+                        />
+                        <label
+                          htmlFor={`category-${category.id}`}
+                          className="text-sm cursor-pointer"
+                        >
+                          {category.name}
+                        </label>
+                      </div>
+                    ))}
                   </div>
                   {availableCategories.length === 0 && (
-                    <p className="text-sm text-muted-foreground mt-2">No categories in selected collections</p>
+                    <p className="text-sm text-muted-foreground mt-2">No categories in selected collection</p>
                   )}
                 </div>
               )}
@@ -487,34 +469,43 @@ export default function AdminProductsPage() {
                 />
               </div>
 
-              {/* Pricing */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="price">Price ($)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div className="flex items-center space-x-2 pt-6">
-                  <Checkbox
-                    id="isFree"
-                    checked={formData.isFree}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isFree: checked })}
-                  />
-                  <label htmlFor="isFree" className="text-sm font-medium cursor-pointer">
-                    Free Download
-                  </label>
-                </div>
+              {/* Pricing - Radio buttons for Free or Paid */}
+              <div className="border rounded-lg p-4">
+                <Label className="mb-3 block">Pricing *</Label>
+                <RadioGroup
+                  value={formData.pricingType}
+                  onValueChange={(value) => setFormData({ ...formData, pricingType: value, price: value === 'free' ? '0' : formData.price })}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="free" id="pricing-free" />
+                    <Label htmlFor="pricing-free" className="cursor-pointer font-normal">Free Download</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="paid" id="pricing-paid" />
+                    <Label htmlFor="pricing-paid" className="cursor-pointer font-normal">Paid</Label>
+                  </div>
+                </RadioGroup>
+                
+                {formData.pricingType === 'paid' && (
+                  <div className="mt-3">
+                    <Label htmlFor="price">Price ($)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      placeholder="9.99"
+                      className="w-32"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Book Parameters - Only for Bookshop */}
-              {isBookshopSelected && (
+              {isBookshopSelected() && (
                 <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
                   <Label className="text-purple-800 font-bold mb-3 block">📚 Book Parameters</Label>
                   <div className="grid grid-cols-3 gap-4">
@@ -567,7 +558,7 @@ export default function AdminProductsPage() {
               </div>
 
               {/* Photo Gallery - For Printables and Bookshop */}
-              {isPrintablesOrBookshopSelected && (
+              {isPrintablesOrBookshopSelected() && (
                 <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
                   <Label className="text-blue-800 font-bold mb-3 block">📷 Photo Gallery (Multiple Images)</Label>
                   <Input
@@ -617,7 +608,7 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={selectedCategories.length === 0}>
+                <Button type="submit" className="flex-1" disabled={selectedCategories.length === 0 || !selectedCollection}>
                   {editingProduct ? 'Update' : 'Create'}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
