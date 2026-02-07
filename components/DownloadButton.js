@@ -1,56 +1,65 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Loader2, ShoppingCart } from 'lucide-react';
+import { Download, Loader2, ShoppingCart, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 export default function DownloadButton({ product, gradient }) {
   const [loading, setLoading] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
   const router = useRouter();
+
+  const addToCart = () => {
+    // Get current cart from localStorage
+    const savedCart = localStorage.getItem('cart');
+    const cart = savedCart ? JSON.parse(savedCart) : [];
+    
+    // Check if product already in cart
+    const existingIndex = cart.findIndex(item => item.id === product.id);
+    
+    if (existingIndex >= 0) {
+      // Increase quantity
+      cart[existingIndex].quantity += 1;
+    } else {
+      // Add new item
+      cart.push({
+        id: product.id,
+        slug: product.slug,
+        title: product.title,
+        price: product.price,
+        image: product.webpPath || product.thumbnailPath,
+        category: product.category?.name || '',
+        quantity: 1
+      });
+    }
+    
+    // Save cart
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Dispatch event for header cart count update
+    window.dispatchEvent(new Event('cartUpdated'));
+    
+    return true;
+  };
 
   const handleClick = async () => {
     setLoading(true);
     
     try {
       if (product.isFree) {
-        // Handle free download
-        const response = await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success && data.downloadUrl) {
-          // Open download in new tab
-          window.open(data.downloadUrl, '_blank');
-          alert('Download started! Check your browser downloads.');
-        } else {
-          alert(data.error || 'Download failed');
-        }
+        // Handle free download - add to cart and go to checkout directly
+        addToCart();
+        router.push('/checkout');
       } else {
         // Handle add to cart for paid products
-        const response = await fetch('/api/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id, quantity: 1 })
-        });
+        addToCart();
+        setAddedToCart(true);
         
-        const data = await response.json();
-        
-        if (data.success) {
-          // Redirect to cart
-          router.push('/cart');
-        } else {
-          if (response.status === 401) {
-            // Not logged in - redirect to login
-            router.push(`/login?redirect=/product/${product.slug}`);
-          } else {
-            alert(data.error || 'Failed to add to cart');
-          }
-        }
+        // Reset after 2 seconds
+        setTimeout(() => {
+          setAddedToCart(false);
+        }, 2000);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -59,6 +68,34 @@ export default function DownloadButton({ product, gradient }) {
       setLoading(false);
     }
   };
+
+  const goToCart = () => {
+    router.push('/cart');
+  };
+
+  if (addedToCart) {
+    return (
+      <div className="space-y-2">
+        <Button
+          disabled
+          size="lg"
+          className="w-full bg-green-500 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl"
+        >
+          <Check className="mr-3 h-8 w-8" />
+          Added to Cart!
+        </Button>
+        <Button
+          onClick={goToCart}
+          variant="outline"
+          size="lg"
+          className="w-full font-bold text-lg py-6 rounded-xl"
+        >
+          <ShoppingCart className="mr-2 h-5 w-5" />
+          View Cart & Checkout
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Button
