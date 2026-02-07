@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { sendContactEmail } from '@/lib/email';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, subject, message } = body;
+    const { name, email, message } = body;
     
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -13,8 +13,14 @@ export async function POST(request) {
       );
     }
     
-    // For now, just log the contact (can be extended to store in DB or send email)
-    console.log('Contact form submission:', { name, email, subject, message });
+    // Send email notification
+    const emailResult = await sendContactEmail({ name, email, message });
+    
+    if (!emailResult.success) {
+      console.error('Email send failed:', emailResult.error);
+      // Still return success to user - we logged the message
+      console.log('Contact form submission (email failed):', { name, email, message });
+    }
     
     return NextResponse.json({
       success: true,
