@@ -320,6 +320,7 @@ export default function AdminProductsPage() {
     });
     setSelectedCollection('');
     setSelectedCategories([]);
+    setValidationErrors({});
   };
 
   const handleEdit = (product) => {
