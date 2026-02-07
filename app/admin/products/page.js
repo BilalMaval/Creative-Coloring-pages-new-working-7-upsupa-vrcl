@@ -47,6 +47,9 @@ export default function AdminProductsPage() {
     dimensions: ''
   });
 
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState({});
+
   useEffect(() => {
     fetchData();
   }, []);
