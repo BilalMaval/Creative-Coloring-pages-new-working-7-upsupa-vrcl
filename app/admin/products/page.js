@@ -654,10 +654,12 @@ export default function AdminProductsPage() {
                   disabled={uploading.pdf}
                   className={validationErrors.pdf ? 'border-red-500' : ''}
                 />
-                <div className="mt-1 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
-                  <strong>⚠️ Required:</strong> This is the file customers will download<br/>
-                  <strong>Accepted formats:</strong> PDF, EPUB, ZIP • <strong>Max size:</strong> 50MB
-                </div>
+                {validationErrors.pdf && (
+                  <div className="mt-1 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                    <strong>⚠️ Required:</strong> This is the file customers will download<br/>
+                    <strong>Accepted formats:</strong> PDF, EPUB, ZIP • <strong>Max size:</strong> 50MB
+                  </div>
+                )}
                 {formData.pdfPath && (
                   <p className="text-sm text-green-600 mt-2 font-medium">✓ File uploaded and ready for download</p>
                 )}
