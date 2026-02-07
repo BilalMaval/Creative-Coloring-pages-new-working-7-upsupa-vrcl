@@ -92,8 +92,9 @@ export default function AdminLoginPage() {
           </form>
 
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            <p>Default credentials:</p>
-            <p className="font-mono text-xs mt-1">admin@printables.com / admin123</p>
+            <Link href="/admin/forgot-password" className="text-primary hover:underline">
+              Forgot your password?
+            </Link>
           </div>
         </CardContent>
       </Card>
