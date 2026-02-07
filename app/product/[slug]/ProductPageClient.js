@@ -21,6 +21,9 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
   const parentSlug = product.category?.parent?.slug;
   const showGallery = parentSlug === 'bookshop' || parentSlug === 'printables';
   const showBookParams = parentSlug === 'bookshop';
+  
+  // For gallery - combine main image with gallery images
+  const hasGalleryImages = product.gallery && product.gallery.length > 0;
 
   return (
     <div className="bg-gradient-to-b from-blue-50 via-purple-50 to-pink-50 min-h-screen">
@@ -54,35 +57,12 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Image Section */}
           <div className="bg-white rounded-3xl p-6 shadow-2xl">
-            <div className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl relative overflow-hidden mb-4">
-              {product.webpPath ? (
-                <Image
-                  src={product.webpPath}
-                  alt={product.title}
-                  fill
-                  className="object-contain p-4"
-                  priority
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <span className="text-9xl">🎨</span>
-                </div>
-              )}
-              {product.isFeatured && (
-                <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-sm font-black px-4 py-2 rounded-full shadow-lg">
-                  ⭐ Featured
-                </div>
-              )}
-            </div>
-            
-            {/* Photo Gallery for Printables and Bookshop */}
-            {showGallery && (
-              <PhotoGallery 
-                images={product.gallery || []} 
-                mainImage={product.webpPath}
-                title={product.title}
-              />
-            )}
+            {/* Photo Gallery with Zoom - handles main image and gallery */}
+            <PhotoGallery 
+              images={product.gallery || []} 
+              mainImage={product.webpPath}
+              title={product.title}
+            />
             
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mt-4">
@@ -145,7 +125,7 @@ export default function ProductPageClient({ product, relatedProducts, gradient }
                 </div>
               )}
 
-              {/* Download Button */}
+              {/* Download/Purchase Button */}
               <div className="space-y-3">
                 {product.isFree ? (
                   <div className={`bg-gradient-to-r ${gradient} text-white text-center py-6 px-8 rounded-2xl shadow-xl`}>
