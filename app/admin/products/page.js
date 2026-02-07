@@ -640,27 +640,43 @@ export default function AdminProductsPage() {
               )}
 
               <div>
-                <Label htmlFor="pdf">PDF/File *</Label>
+                <Label htmlFor="pdf" className="flex items-center gap-2">
+                  Downloadable File (PDF/EPUB/ZIP) *
+                  {validationErrors.pdf && <span className="text-red-500 text-xs">({validationErrors.pdf})</span>}
+                </Label>
                 <Input
                   id="pdf"
                   type="file"
                   accept=".pdf,.epub,.zip"
                   onChange={(e) => handleFileUpload(e, 'pdf')}
                   disabled={uploading.pdf}
+                  className={validationErrors.pdf ? 'border-red-500' : ''}
                 />
+                <div className="mt-1 p-2 bg-yellow-50 rounded text-xs text-yellow-700">
+                  <strong>⚠️ Required:</strong> This is the file customers will download<br/>
+                  <strong>Accepted formats:</strong> PDF, EPUB, ZIP • <strong>Max size:</strong> 50MB
+                </div>
                 {formData.pdfPath && (
-                  <p className="text-sm text-green-600 mt-2">✓ File uploaded</p>
+                  <p className="text-sm text-green-600 mt-2 font-medium">✓ File uploaded and ready for download</p>
                 )}
-                {uploading.pdf && <p className="text-sm text-muted-foreground mt-2">Uploading file...</p>}
+                {uploading.pdf && <p className="text-sm text-blue-600 mt-2">📤 Uploading file...</p>}
               </div>
 
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={selectedCategories.length === 0 || !selectedCollection}>
-                  {editingProduct ? 'Update' : 'Create'}
-                </Button>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancel
-                </Button>
+              {/* Submit Button */}
+              <div className="border-t pt-4 mt-4">
+                {Object.keys(validationErrors).length > 0 && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-700 text-sm font-medium">⚠️ Please fill all required fields marked with *</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1" disabled={uploading.image || uploading.pdf || uploading.gallery}>
+                    {uploading.image || uploading.pdf || uploading.gallery ? 'Uploading...' : editingProduct ? 'Update Product' : 'Create Product'}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                </div>
               </div>
             </form>
           </DialogContent>
