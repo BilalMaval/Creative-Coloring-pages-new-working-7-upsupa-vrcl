@@ -2,12 +2,48 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
-import { Menu, X, Sparkles, ShoppingCart } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Menu, X, Sparkles, ShoppingCart, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+
+  useEffect(() => {
+    // Check if admin is logged in
+    const checkAdmin = async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+        if (data.success && data.user?.role === 'ADMIN') {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        // Not logged in
+      }
+    };
+    checkAdmin();
+    
+    // Get cart count
+    const updateCartCount = () => {
+      const cart = localStorage.getItem('cart');
+      if (cart) {
+        const items = JSON.parse(cart);
+        setCartCount(items.reduce((sum, item) => sum + item.quantity, 0));
+      } else {
+        setCartCount(0);
+      }
+    };
+    
+    updateCartCount();
+    window.addEventListener('cartUpdated', updateCartCount);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', updateCartCount);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b-4 border-yellow-400 bg-white shadow-lg">
@@ -60,10 +96,23 @@ export default function Header() {
               </Button>
             </Link>
             <Link href="/cart">
-              <Button variant="outline" className="bg-white hover:bg-gray-100 font-bold text-base rounded-full h-11 px-4 shadow-md border-2 border-gray-300">
+              <Button variant="outline" className="bg-white hover:bg-gray-100 font-bold text-base rounded-full h-11 px-4 shadow-md border-2 border-gray-300 relative">
                 <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </Button>
             </Link>
+            {isAdmin && (
+              <Link href="/admin">
+                <Button variant="outline" className="bg-gray-800 hover:bg-gray-900 text-white font-bold text-sm rounded-full h-11 px-4 shadow-md">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Manage
+                </Button>
+              </Link>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -142,9 +191,20 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               <Button className="w-full bg-white hover:bg-gray-100 text-gray-800 font-bold text-lg rounded-full h-14 shadow-md border-2 border-gray-300">
-                🛒 Cart
+                🛒 Cart {cartCount > 0 && `(${cartCount})`}
               </Button>
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="block"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Button className="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold text-lg rounded-full h-14 shadow-md">
+                  ⚙️ Manage
+                </Button>
+              </Link>
+            )}
           </nav>
         )}
       </div>

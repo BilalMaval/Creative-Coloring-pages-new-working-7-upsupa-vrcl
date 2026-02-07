@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Loader2, ShoppingCart, Check } from 'lucide-react';
+import { Download, Loader2, ShoppingCart, Check, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
@@ -28,6 +28,7 @@ export default function DownloadButton({ product, gradient }) {
         slug: product.slug,
         title: product.title,
         price: product.price,
+        isFree: product.isFree,
         image: product.webpPath || product.thumbnailPath,
         category: product.category?.name || '',
         quantity: 1
@@ -43,24 +44,57 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  const handleClick = async () => {
+  const handleFreeDownload = async () => {
     setLoading(true);
     
     try {
-      if (product.isFree) {
-        // Handle free download - add to cart and go to checkout directly
-        addToCart();
-        router.push('/checkout');
-      } else {
-        // Handle add to cart for paid products
-        addToCart();
-        setAddedToCart(true);
+      // For free products, initiate download directly
+      if (product.pdfPath) {
+        // Track download
+        await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id })
+        }).catch(() => {}); // Don't block on tracking failure
         
-        // Reset after 2 seconds
-        setTimeout(() => {
-          setAddedToCart(false);
-        }, 2000);
+        // Open download in new tab
+        window.open(product.pdfPath, '_blank');
+      } else {
+        alert('Download file not available');
       }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    setLoading(true);
+    
+    try {
+      addToCart();
+      setAddedToCart(true);
+      
+      // Reset after 2 seconds
+      setTimeout(() => {
+        setAddedToCart(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuyNow = async () => {
+    setLoading(true);
+    
+    try {
+      addToCart();
+      router.push('/checkout');
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
@@ -73,6 +107,31 @@ export default function DownloadButton({ product, gradient }) {
     router.push('/cart');
   };
 
+  // FREE PRODUCT - Single download button
+  if (product.isFree) {
+    return (
+      <Button
+        onClick={handleFreeDownload}
+        disabled={loading}
+        size="lg"
+        className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:transform-none`}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-3 h-8 w-8 animate-spin" />
+            Downloading...
+          </>
+        ) : (
+          <>
+            <Download className="mr-3 h-8 w-8" />
+            Download FREE
+          </>
+        )}
+      </Button>
+    );
+  }
+
+  // PAID PRODUCT - Added to cart state
   if (addedToCart) {
     return (
       <div className="space-y-2">
@@ -97,29 +156,36 @@ export default function DownloadButton({ product, gradient }) {
     );
   }
 
+  // PAID PRODUCT - Two buttons: Add to Cart and Buy Now
   return (
-    <Button
-      onClick={handleClick}
-      disabled={loading}
-      size="lg"
-      className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:transform-none`}
-    >
-      {loading ? (
-        <>
-          <Loader2 className="mr-3 h-8 w-8 animate-spin" />
-          Processing...
-        </>
-      ) : product.isFree ? (
-        <>
-          <Download className="mr-3 h-8 w-8" />
-          Download FREE
-        </>
-      ) : (
-        <>
-          <ShoppingCart className="mr-3 h-8 w-8" />
-          Add to Cart - ${Number(product.price).toFixed(2)}
-        </>
-      )}
-    </Button>
+    <div className="space-y-3">
+      <Button
+        onClick={handleBuyNow}
+        disabled={loading}
+        size="lg"
+        className={`w-full bg-gradient-to-r ${gradient} hover:opacity-90 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl transform hover:scale-105 transition-all disabled:opacity-50 disabled:transform-none`}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-3 h-8 w-8 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <Zap className="mr-3 h-8 w-8" />
+            Buy Now - ${Number(product.price).toFixed(2)}
+          </>
+        )}
+      </Button>
+      <Button
+        onClick={handleAddToCart}
+        variant="outline"
+        size="lg"
+        className="w-full font-bold text-lg py-6 rounded-xl border-2"
+      >
+        <ShoppingCart className="mr-2 h-5 w-5" />
+        Add to Cart
+      </Button>
+    </div>
   );
 }
