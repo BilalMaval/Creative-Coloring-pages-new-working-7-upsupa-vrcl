@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 export default function DownloadButton({ product, gradient }) {
   const [loading, setLoading] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
   const router = useRouter();
 
   const addToCart = () => {
@@ -48,20 +49,36 @@ export default function DownloadButton({ product, gradient }) {
     setLoading(true);
     
     try {
-      // For free products, initiate download directly
-      if (product.pdfPath) {
-        // Track download
+      // Check if PDF path exists
+      if (!product.pdfPath) {
+        alert('Download file not available. Please contact support.');
+        setLoading(false);
+        return;
+      }
+      
+      // Track download via API
+      try {
         await fetch('/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ productId: product.id })
-        }).catch(() => {}); // Don't block on tracking failure
-        
-        // Open download in new tab
-        window.open(product.pdfPath, '_blank');
-      } else {
-        alert('Download file not available');
+        });
+      } catch (e) {
+        console.log('Download tracking failed, continuing with download');
       }
+      
+      // Create a direct download link
+      const link = document.createElement('a');
+      link.href = product.pdfPath;
+      link.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setDownloadStarted(true);
+      setTimeout(() => setDownloadStarted(false), 3000);
+      
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
@@ -107,6 +124,20 @@ export default function DownloadButton({ product, gradient }) {
     router.push('/cart');
   };
 
+  // FREE PRODUCT - Download started state
+  if (downloadStarted) {
+    return (
+      <Button
+        disabled
+        size="lg"
+        className="w-full bg-green-500 text-white font-black text-xl md:text-2xl py-8 rounded-2xl shadow-2xl"
+      >
+        <Check className="mr-3 h-8 w-8" />
+        Download Started!
+      </Button>
+    );
+  }
+
   // FREE PRODUCT - Single download button
   if (product.isFree) {
     return (
@@ -119,7 +150,7 @@ export default function DownloadButton({ product, gradient }) {
         {loading ? (
           <>
             <Loader2 className="mr-3 h-8 w-8 animate-spin" />
-            Downloading...
+            Preparing Download...
           </>
         ) : (
           <>

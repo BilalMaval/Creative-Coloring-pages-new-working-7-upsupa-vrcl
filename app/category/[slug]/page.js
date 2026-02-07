@@ -64,9 +64,9 @@ async function getCategoryData(slug) {
     
     if (!category) return null;
     
-    const products = await prisma.product.findMany({
+    // Get products that have this category as primary OR in additionalCategories
+    const allProducts = await prisma.product.findMany({
       where: {
-        categoryId: category.id,
         isActive: true
       },
       orderBy: [
@@ -79,6 +79,19 @@ async function getCategoryData(slug) {
           select: { rating: true }
         }
       }
+    });
+    
+    // Filter products that belong to this category (primary or additional)
+    const products = allProducts.filter(product => {
+      // Check primary category
+      if (product.categoryId === category.id) return true;
+      
+      // Check additional categories in customFields
+      if (product.customFields && product.customFields.additionalCategories) {
+        return product.customFields.additionalCategories.includes(category.id);
+      }
+      
+      return false;
     });
     
     // Calculate average rating for each product
@@ -122,6 +135,7 @@ export default async function CategoryPage({ params }) {
     if (parentSlug === 'coloring-pages') return 'from-purple-500 to-pink-500';
     if (parentSlug === 'calendars') return 'from-green-500 to-teal-500';
     if (parentSlug === 'printables') return 'from-orange-500 to-red-500';
+    if (parentSlug === 'bookshop') return 'from-indigo-500 to-purple-500';
     return 'from-blue-500 to-purple-500';
   };
 
@@ -145,9 +159,6 @@ export default async function CategoryPage({ params }) {
               <div className="bg-white text-gray-800 font-black py-3 px-6 rounded-full inline-block">
                 <Grid3x3 className="inline-block mr-2 h-5 w-5" />
                 {products.length} {products.length === 1 ? 'Item' : 'Items'}
-              </div>
-              <div className="bg-white/20 text-white font-bold py-3 px-6 rounded-full inline-block">
-                ✨ 100% FREE!
               </div>
             </div>
           </div>
@@ -204,9 +215,13 @@ export default async function CategoryPage({ params }) {
                           ⭐ Featured
                         </div>
                       )}
-                      {product.isFree && (
+                      {product.isFree ? (
                         <div className="absolute top-2 left-2 bg-green-500 text-white text-xs font-black px-2 py-1 rounded-full">
                           FREE
+                        </div>
+                      ) : (
+                        <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs font-black px-2 py-1 rounded-full">
+                          ${Number(product.price).toFixed(2)}
                         </div>
                       )}
                     </div>

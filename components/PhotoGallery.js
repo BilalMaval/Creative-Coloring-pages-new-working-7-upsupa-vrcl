@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 
 export default function PhotoGallery({ images = [], mainImage, title }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
+  const imageContainerRef = useRef(null);
   
   // Combine main image with gallery images
   const allImages = mainImage ? [mainImage, ...images] : images;
@@ -16,29 +17,30 @@ export default function PhotoGallery({ images = [], mainImage, title }) {
   
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % allImages.length);
-    setIsZoomed(false);
   };
   
   const prevImage = () => {
     setCurrentIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-    setIsZoomed(false);
   };
   
   const selectImage = (index) => {
     setCurrentIndex(index);
-    setIsZoomed(false);
   };
 
   const handleMouseMove = (e) => {
-    if (!isZoomed) return;
-    const rect = e.currentTarget.getBoundingClientRect();
+    if (!imageContainerRef.current) return;
+    const rect = imageContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomPosition({ x, y });
   };
 
-  const toggleZoom = () => {
-    setIsZoomed(!isZoomed);
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
   };
   
   return (
@@ -46,18 +48,21 @@ export default function PhotoGallery({ images = [], mainImage, title }) {
       {/* Main Image Display with Navigation Arrows */}
       <div className="relative">
         <div 
-          className={`aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl relative overflow-hidden ${isZoomed ? 'cursor-zoom-out' : 'cursor-zoom-in'}`}
-          onClick={toggleZoom}
+          ref={imageContainerRef}
+          className="aspect-[3/4] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl relative overflow-hidden cursor-crosshair"
           onMouseMove={handleMouseMove}
-          onMouseLeave={() => setIsZoomed(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div 
-            className="w-full h-full relative"
-            style={isZoomed ? {
-              transform: 'scale(2)',
-              transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
-              transition: 'transform-origin 0.1s ease-out'
-            } : {}}
+            className="w-full h-full relative transition-transform duration-100 ease-out"
+            style={isHovering ? {
+              transform: 'scale(2.5)',
+              transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
+            } : {
+              transform: 'scale(1)',
+              transformOrigin: 'center center'
+            }}
           >
             <Image
               src={allImages[currentIndex]}
@@ -68,33 +73,35 @@ export default function PhotoGallery({ images = [], mainImage, title }) {
             />
           </div>
           
-          {/* Zoom indicator */}
-          <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-            {isZoomed ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
-            {isZoomed ? 'Click to zoom out' : 'Click to zoom in'}
-          </div>
+          {/* Zoom indicator - only show when not hovering */}
+          {!isHovering && (
+            <div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 pointer-events-none">
+              <ZoomIn className="h-4 w-4" />
+              Hover to zoom
+            </div>
+          )}
         </div>
         
         {/* Navigation Arrows - Only show if multiple images */}
         {allImages.length > 1 && (
           <>
             <button
-              onClick={(e) => { e.stopPropagation(); prevImage(); }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all hover:scale-110"
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all hover:scale-110 z-10"
               aria-label="Previous image"
             >
               <ChevronLeft className="h-6 w-6 text-gray-800" />
             </button>
             <button
-              onClick={(e) => { e.stopPropagation(); nextImage(); }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all hover:scale-110"
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all hover:scale-110 z-10"
               aria-label="Next image"
             >
               <ChevronRight className="h-6 w-6 text-gray-800" />
             </button>
             
             {/* Image counter */}
-            <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-bold">
+            <div className="absolute bottom-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-bold z-10">
               {currentIndex + 1} / {allImages.length}
             </div>
           </>
