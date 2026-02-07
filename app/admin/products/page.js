@@ -209,15 +209,48 @@ export default function AdminProductsPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Reset validation errors
+    const errors = {};
+    
+    // Validate required fields
     if (!selectedCollection) {
-      alert('Please select a collection');
-      return;
+      errors.collection = 'Please select a collection';
     }
     
     if (selectedCategories.length === 0) {
-      alert('Please select at least one category');
+      errors.categories = 'Please select at least one category';
+    }
+    
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    }
+    
+    if (!formData.slug.trim()) {
+      errors.slug = 'Slug is required';
+    }
+    
+    if (!formData.image) {
+      errors.image = 'Preview image is required';
+    }
+    
+    if (!formData.pdfPath) {
+      errors.pdf = 'Downloadable file (PDF) is required';
+    }
+    
+    if (formData.pricingType === 'paid' && (!formData.price || parseFloat(formData.price) <= 0)) {
+      errors.price = 'Please enter a valid price greater than $0';
+    }
+    
+    // If there are validation errors, show them and stop
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      // Show alert with all errors
+      const errorMessages = Object.values(errors).join('\\n');
+      alert('Please fix the following errors:\\n\\n' + errorMessages);
       return;
     }
+    
+    setValidationErrors({});
     
     try {
       const url = '/api/printables';
@@ -260,6 +293,7 @@ export default function AdminProductsPage() {
         setEditingProduct(null);
         resetForm();
         fetchData();
+        alert('Product saved successfully!');
       } else {
         alert(data.error || 'Failed to save product');
       }
