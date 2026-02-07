@@ -145,7 +145,7 @@ export default function ContactPage() {
         </Card>
 
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>You can also reach us at: <strong>contact@printables.com</strong></p>
+          <p>You can also reach us at: <strong>sufyan.afzalk@gmail.com</strong></p>
         </div>
       </div>
     </div>
