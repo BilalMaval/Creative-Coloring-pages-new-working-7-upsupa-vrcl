@@ -96,7 +96,7 @@ export default function SearchPageClient() {
             </Button>
             {categories.map((cat) => (
               <Button
-                key={cat.id}  {/* FIXED for Prisma/Postgres */}
+                key={cat.id}
                 variant={selectedCategory === cat.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handleCategoryChange(cat.id)}
