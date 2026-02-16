@@ -1,62 +1,55 @@
-import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { supabase, uploadFile, validateImageFile, validatePdfFile } from '@/lib/upload';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const runtime = 'nodejs'; // Required for formData in Next.js app directory
 
-/**
- * Uploads a file directly to Supabase Storage
- * @param {Object} fileData - { name, type, data: Buffer }
- * @param {string} folder - 'images' or 'pdfs'
- * @returns {string} Public URL
- */
-export async function uploadFile(fileData, folder) {
+export async function POST(request) {
   try {
-    const fileName = `${Date.now()}-${fileData.name}`;
-    const path = `${folder}/${fileName}`;
+    // Parse form data
+    const formData = await request.formData();
+    const file = formData.get('file'); // File object
+    const type = formData.get('type'); // 'image' or 'pdf'
 
-    const { error } = await supabase.storage
-      .from('uploads')           // your bucket name
-      .upload(path, fileData.data, {
-        contentType: fileData.type,
-        upsert: false,
-      });
-
-    if (error) {
-      throw new Error(error.message);
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      );
     }
 
-    // Generate public URL
-    const { data } = supabase.storage.from('uploads').getPublicUrl(path);
-    return data.publicUrl;
-  } catch (err) {
-    console.error('Supabase upload error:', err);
-    throw err;
-  }
-}
+    // Convert File object to Buffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const fileData = {
+      name: file.name,
+      type: file.type,
+      data: buffer,
+    };
 
-/**
- * Example validation for image files
- */
-export function validateImageFile(fileData) {
-  const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-  if (!allowedTypes.includes(fileData.type)) {
-    throw new Error('Invalid image type');
-  }
-  // Optional: size limit
-  if (fileData.data.length > 5 * 1024 * 1024) {
-    throw new Error('Image too large (max 5MB)');
-  }
-}
+    // Validate file
+    if (type === 'image') {
+      validateImageFile(fileData);
+    } else if (type === 'pdf') {
+      validatePdfFile(fileData);
+    } else {
+      return NextResponse.json(
+        { success: false, error: 'Invalid file type' },
+        { status: 400 }
+      );
+    }
 
-/**
- * Example validation for PDF files
- */
-export function validatePdfFile(fileData) {
-  if (fileData.type !== 'application/pdf') {
-    throw new Error('Invalid PDF file');
-  }
-  if (fileData.data.length > 20 * 1024 * 1024) {
-    throw new Error('PDF too large (max 20MB)');
+    // Determine folder
+    const folder = type === 'pdf' ? 'pdfs' : 'images';
+
+    // Upload to Supabase
+    const url = await uploadFile(fileData, folder);
+
+    return NextResponse.json({ success: true, url });
+  } catch (error) {
+    console.error('Upload error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Upload failed' },
+      { status: 500 }
+    );
   }
 }
