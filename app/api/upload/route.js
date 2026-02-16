@@ -1,62 +1,50 @@
 import { NextResponse } from 'next/server';
-import formidable from 'formidable';
 import { uploadFile, validateImageFile, validatePdfFile } from '@/lib/upload';
 
-export const runtime = 'nodejs';
+export const runtime = 'nodejs';  // Node runtime required for formData
 
-// Disable Next.js default body parsing for this route
-export const dynamic = 'force-dynamic';
+export async function POST(request) {
+  try {
+    // Parse incoming form data
+    const formData = await request.formData();
+    const file = formData.get('file');
+    const type = formData.get('type'); // 'image' or 'pdf'
 
-export async function POST(req) {
-  // formidable config
-  const form = new formidable.IncomingForm({
-    keepExtensions: true, // preserve file extensions
-    maxFileSize: 50 * 1024 * 1024, // 50MB limit
-  });
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      );
+    }
 
-  return new Promise((resolve, reject) => {
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        console.error('Form parse error:', err);
-        return resolve(
-          NextResponse.json({ success: false, error: err.message }, { status: 500 })
-        );
-      }
+    // Validate the file type
+    if (type === 'image') {
+      validateImageFile(file);
+    } else if (type === 'pdf') {
+      validatePdfFile(file);
+    } else {
+      return NextResponse.json(
+        { success: false, error: 'Invalid file type' },
+        { status: 400 }
+      );
+    }
 
-      try {
-        const file = files.file;
-        const type = fields.type;
+    // Upload file
+    const subfolder = type === 'pdf' ? 'pdfs' : 'images';
 
-        if (!file) {
-          return resolve(
-            NextResponse.json({ success: false, error: 'No file provided' }, { status: 400 })
-          );
-        }
+    // If your uploadFile supports File objects directly, this will work
+    // Otherwise, you may need to convert file to ArrayBuffer
+    const url = await uploadFile(file, subfolder);
 
-        // Validate file
-        if (type === 'image') {
-          validateImageFile(file);
-        } else if (type === 'pdf') {
-          validatePdfFile(file);
-        } else {
-          return resolve(
-            NextResponse.json({ success: false, error: 'Invalid file type' }, { status: 400 })
-          );
-        }
-
-        // Upload file
-        const subfolder = type === 'pdf' ? 'pdfs' : 'images';
-        const url = await uploadFile(file, subfolder);
-
-        return resolve(
-          NextResponse.json({ success: true, url })
-        );
-      } catch (error) {
-        console.error('Upload error:', error);
-        return resolve(
-          NextResponse.json({ success: false, error: error.message || 'Upload failed' }, { status: 500 })
-        );
-      }
+    return NextResponse.json({
+      success: true,
+      url
     });
-  });
+  } catch (error) {
+    console.error('Upload error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Upload failed' },
+      { status: 500 }
+    );
+  }
 }
