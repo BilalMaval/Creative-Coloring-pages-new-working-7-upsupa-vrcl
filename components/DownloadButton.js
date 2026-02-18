@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Download, Loader2, ShoppingCart, Check, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/upload'; // make sure supabase client is imported
+import { supabase } from '@/lib/upload'; // ensure supabase client is imported
 
 export default function DownloadButton({ product, gradient }) {
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,9 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
+  // -----------------------------
+  // FREE PRODUCT - Download PDF
+  // -----------------------------
   const handleFreeDownload = async () => {
     setLoading(true);
 
@@ -47,23 +50,22 @@ export default function DownloadButton({ product, gradient }) {
         return;
       }
 
-      // Generate signed URL (valid for 60 seconds)
-      const path = product.pdfPath.replace(
-        `${supabase.storageUrl}/object/public/uploads/`,
-        ''
-      );
+      // Extract path inside bucket
+      const path = product.pdfPath.split('/uploads/')[1]; // e.g., pdfs/xyz.pdf
+
+      // Create signed URL valid for 60 seconds
       const { data, error } = await supabase.storage
         .from('uploads')
         .createSignedUrl(path, 60);
 
-      if (error) {
+      if (error || !data.signedUrl) {
         console.error('Error creating signed URL:', error);
         alert('Download failed. Please try again.');
         setLoading(false);
         return;
       }
 
-      // Create download link and trigger click
+      // Force download via <a> tag
       const link = document.createElement('a');
       link.href = data.signedUrl;
       link.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
@@ -110,6 +112,9 @@ export default function DownloadButton({ product, gradient }) {
 
   const goToCart = () => router.push('/cart');
 
+  // -----------------------------
+  // Button states
+  // -----------------------------
   if (downloadStarted) {
     return (
       <Button
