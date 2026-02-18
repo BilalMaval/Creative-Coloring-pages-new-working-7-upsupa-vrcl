@@ -37,7 +37,7 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  // ✅ Clean professional download (no flicker, no new tab)
+  // ✅ Free download handler with counting
   const handleFreeDownload = () => {
     if (!product.pdfPath) {
       alert('Download file not available. Please contact support.');
@@ -54,11 +54,13 @@ export default function DownloadButton({ product, gradient }) {
       product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
     );
 
-    const url = `/api/download?file=${filePath}&name=${fileName}`;
+    // Include productId for counting
+    const url = `/api/download?file=${filePath}&name=${fileName}&productId=${product.id}`;
 
+    // Professional download trigger
     const link = document.createElement('a');
     link.href = url;
-    link.download = fileName;
+    link.download = fileName; // ensures browser downloads
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
