@@ -36,70 +36,40 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  // --- UPDATED FREE DOWNLOAD ---
-  const handleFreeDownload = async () => {
-    setLoading(true);
-
-    try {
-      if (!product.pdfPath) {
-        alert('Download file not available. Please contact support.');
-        setLoading(false);
-        return;
-      }
-
-      // Call your new API route to force download
-      const url = `/api/download?file=${encodeURIComponent(product.pdfPath)}&name=${encodeURIComponent(
-        product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
-      )}`;
-
-      // Use a hidden link to trigger download
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      setDownloadStarted(true);
-      setTimeout(() => setDownloadStarted(false), 3000);
-    } catch (error) {
-      console.error('Download error:', error);
-      alert('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
+  const handleFreeDownload = () => {
+    if (!product.pdfPath) {
+      alert('Download file not available.');
+      return;
     }
+
+    // Construct route URL for API download
+    const url = `/api/download?file=${encodeURIComponent(
+      product.pdfPath.replace(/^.*\/uploads\//, '')
+    )}&name=${encodeURIComponent(
+      product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
+    )}`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.click();
+
+    setDownloadStarted(true);
+    setTimeout(() => setDownloadStarted(false), 3000);
   };
 
-  const handleAddToCart = async () => {
-    setLoading(true);
-    try {
-      addToCart();
-      setAddedToCart(true);
-      setTimeout(() => setAddedToCart(false), 2000);
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleAddToCart = () => {
+    addToCart();
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const handleBuyNow = async () => {
-    setLoading(true);
-    try {
-      addToCart();
-      router.push('/checkout');
-    } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const handleBuyNow = () => {
+    addToCart();
+    router.push('/checkout');
   };
 
   const goToCart = () => router.push('/cart');
 
-  // --- UI States ---
   if (downloadStarted) {
     return (
       <Button
