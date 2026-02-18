@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/upload';
 
-// Use Edge runtime for signed URL redirects
 export const runtime = 'edge';
 
 export async function GET(request) {
@@ -13,22 +12,21 @@ export async function GET(request) {
       return new Response('File not specified', { status: 400 });
     }
 
-    // Generate a signed URL valid for 60 seconds
-    const { data, error } = await supabase.storage
-      .from('uploads')
-      .createSignedUrl(filePathParam, 60);
+    // Download the file from Supabase Storage bucket
+    const { data, error } = await supabase.storage.from('uploads').download(filePathParam);
 
-    if (error || !data?.signedUrl) {
-      console.error('Error creating signed URL:', error);
+    if (error || !data) {
+      console.error('Error downloading file from Supabase:', error);
       return new Response('Download failed', { status: 500 });
     }
 
-    // Edge-compatible redirect with download filename
-    return new Response(null, {
-      status: 302,
+    // Convert to ArrayBuffer for Edge Response
+    const arrayBuffer = await data.arrayBuffer();
+
+    return new Response(arrayBuffer, {
+      status: 200,
       headers: {
-        Location: data.signedUrl,
-        // Forces browser to download with the correct filename
+        'Content-Type': data.type || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${fileNameParam}"`,
       },
     });
