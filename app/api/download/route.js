@@ -23,11 +23,12 @@ export async function GET(request) {
       return new Response('Download failed', { status: 500 });
     }
 
-    // Redirect user to signed URL
+    // Edge-compatible redirect with download filename
     return new Response(null, {
       status: 302,
       headers: {
         Location: data.signedUrl,
+        // Forces browser to download with the correct filename
         'Content-Disposition': `attachment; filename="${fileNameParam}"`,
       },
     });
