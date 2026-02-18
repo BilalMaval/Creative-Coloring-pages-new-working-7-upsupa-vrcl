@@ -36,29 +36,7 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  const handleFreeDownload = () => {
-    if (!product.pdfPath) {
-      alert('Download file not available. Please contact support.');
-      return;
-    }
 
-    setDownloadStarted(true);
-
-    // Construct API route URL
-    const filePath = encodeURIComponent(product.pdfPath.replace(/^.*\/uploads\//, '')); // relative path in bucket
-    const fileName = encodeURIComponent(product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf');
-    const url = `/api/download?file=${filePath}&name=${fileName}`;
-
-    // Trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    setTimeout(() => setDownloadStarted(false), 3000);
-  };
 
   const handleAddToCart = () => {
     setLoading(true);
@@ -80,7 +58,35 @@ export default function DownloadButton({ product, gradient }) {
       addToCart();
       router.push('/checkout');
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error:', errconst handleFreeDownload = () => {
+  if (!product.pdfPath) {
+    alert('Download file not available. Please contact support.');
+    return;
+  }
+
+  setDownloadStarted(true);
+
+  const filePath = encodeURIComponent(
+    product.pdfPath.replace(/^.*\/uploads\//, '')
+  );
+
+  const fileName = encodeURIComponent(
+    product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
+  );
+
+  const url = `/api/download?file=${filePath}&name=${fileName}`;
+
+  // Professional download (no new tab, no flicker)
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName; // Important
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  setTimeout(() => setDownloadStarted(false), 3000);
+};
+or);
       alert('An error occurred. Please try again.');
     } finally {
       setLoading(false);
