@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Download, Loader2, ShoppingCart, Check, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/upload'; // ensure supabase client is imported
 
 export default function DownloadButton({ product, gradient }) {
   const [loading, setLoading] = useState(false);
@@ -37,9 +36,7 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  // -----------------------------
-  // FREE PRODUCT - Download PDF
-  // -----------------------------
+  // --- UPDATED FREE DOWNLOAD ---
   const handleFreeDownload = async () => {
     setLoading(true);
 
@@ -50,25 +47,15 @@ export default function DownloadButton({ product, gradient }) {
         return;
       }
 
-      // Extract path inside bucket
-      const path = product.pdfPath.split('/uploads/')[1]; // e.g., pdfs/xyz.pdf
+      // Call your new API route to force download
+      const url = `/api/download?file=${encodeURIComponent(product.pdfPath)}&name=${encodeURIComponent(
+        product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
+      )}`;
 
-      // Create signed URL valid for 60 seconds
-      const { data, error } = await supabase.storage
-        .from('uploads')
-        .createSignedUrl(path, 60);
-
-      if (error || !data.signedUrl) {
-        console.error('Error creating signed URL:', error);
-        alert('Download failed. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Force download via <a> tag
+      // Use a hidden link to trigger download
       const link = document.createElement('a');
-      link.href = data.signedUrl;
-      link.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      link.href = url;
+      link.download = product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -112,9 +99,7 @@ export default function DownloadButton({ product, gradient }) {
 
   const goToCart = () => router.push('/cart');
 
-  // -----------------------------
-  // Button states
-  // -----------------------------
+  // --- UI States ---
   if (downloadStarted) {
     return (
       <Button
