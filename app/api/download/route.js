@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/upload';
 
-export const runtime = 'nodejs';
+// Use Edge runtime for signed URL redirects
+export const runtime = 'edge';
 
 export async function GET(request) {
   try {
@@ -23,7 +24,13 @@ export async function GET(request) {
     }
 
     // Redirect user to signed URL
-    return Response.redirect(data.signedUrl, 302);
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: data.signedUrl,
+        'Content-Disposition': `attachment; filename="${fileNameParam}"`,
+      },
+    });
   } catch (err) {
     console.error('Download route error:', err);
     return new Response('Internal Server Error', { status: 500 });
