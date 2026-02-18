@@ -38,34 +38,53 @@ export default function DownloadButton({ product, gradient }) {
 
   const handleFreeDownload = () => {
     if (!product.pdfPath) {
-      alert('Download file not available.');
+      alert('Download file not available. Please contact support.');
       return;
     }
 
-    // Construct route URL for API download
-    const url = `/api/download?file=${encodeURIComponent(
-      product.pdfPath.replace(/^.*\/uploads\//, '')
-    )}&name=${encodeURIComponent(
-      product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
-    )}`;
+    setDownloadStarted(true);
 
+    // Construct API route URL
+    const filePath = encodeURIComponent(product.pdfPath.replace(/^.*\/uploads\//, '')); // relative path in bucket
+    const fileName = encodeURIComponent(product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf');
+    const url = `/api/download?file=${filePath}&name=${fileName}`;
+
+    // Trigger download
     const link = document.createElement('a');
     link.href = url;
+    link.target = '_blank';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
-    setDownloadStarted(true);
     setTimeout(() => setDownloadStarted(false), 3000);
   };
 
   const handleAddToCart = () => {
-    addToCart();
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
+    setLoading(true);
+    try {
+      addToCart();
+      setAddedToCart(true);
+      setTimeout(() => setAddedToCart(false), 2000);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBuyNow = () => {
-    addToCart();
-    router.push('/checkout');
+    setLoading(true);
+    try {
+      addToCart();
+      router.push('/checkout');
+    } catch (error) {
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const goToCart = () => router.push('/cart');
