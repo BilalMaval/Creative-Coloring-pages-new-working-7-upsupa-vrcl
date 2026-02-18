@@ -12,18 +12,13 @@ export default function DownloadButton({ product, gradient }) {
   const router = useRouter();
 
   const addToCart = () => {
-    // Get current cart from localStorage
     const savedCart = localStorage.getItem('cart');
     const cart = savedCart ? JSON.parse(savedCart) : [];
-    
-    // Check if product already in cart
     const existingIndex = cart.findIndex(item => item.id === product.id);
-    
+
     if (existingIndex >= 0) {
-      // Increase quantity
       cart[existingIndex].quantity += 1;
     } else {
-      // Add new item
       cart.push({
         id: product.id,
         slug: product.slug,
@@ -35,27 +30,23 @@ export default function DownloadButton({ product, gradient }) {
         quantity: 1
       });
     }
-    
-    // Save cart
+
     localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Dispatch event for header cart count update
     window.dispatchEvent(new Event('cartUpdated'));
-    
     return true;
   };
 
+  // Updated download function
   const handleFreeDownload = async () => {
     setLoading(true);
-    
+
     try {
-      // Check if PDF path exists
       if (!product.pdfPath) {
         alert('Download file not available. Please contact support.');
         setLoading(false);
         return;
       }
-      
+
       // Track download via API
       try {
         await fetch('/api/download', {
@@ -66,19 +57,25 @@ export default function DownloadButton({ product, gradient }) {
       } catch (e) {
         console.log('Download tracking failed, continuing with download');
       }
-      
-      // Create a direct download link
+
+      // --- NEW: fetch file as blob and force download ---
+      const response = await fetch(product.pdfPath);
+      if (!response.ok) throw new Error('Failed to fetch PDF');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = product.pdfPath;
+      link.href = url;
       link.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
-      link.target = '_blank';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      // --- END NEW LOGIC ---
+
       setDownloadStarted(true);
       setTimeout(() => setDownloadStarted(false), 3000);
-      
+
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
@@ -89,15 +86,11 @@ export default function DownloadButton({ product, gradient }) {
 
   const handleAddToCart = async () => {
     setLoading(true);
-    
+
     try {
       addToCart();
       setAddedToCart(true);
-      
-      // Reset after 2 seconds
-      setTimeout(() => {
-        setAddedToCart(false);
-      }, 2000);
+      setTimeout(() => setAddedToCart(false), 2000);
     } catch (error) {
       console.error('Error:', error);
       alert('An error occurred. Please try again.');
@@ -108,7 +101,7 @@ export default function DownloadButton({ product, gradient }) {
 
   const handleBuyNow = async () => {
     setLoading(true);
-    
+
     try {
       addToCart();
       router.push('/checkout');
@@ -124,7 +117,6 @@ export default function DownloadButton({ product, gradient }) {
     router.push('/cart');
   };
 
-  // FREE PRODUCT - Download started state
   if (downloadStarted) {
     return (
       <Button
@@ -138,7 +130,6 @@ export default function DownloadButton({ product, gradient }) {
     );
   }
 
-  // FREE PRODUCT - Single download button
   if (product.isFree) {
     return (
       <Button
@@ -162,7 +153,6 @@ export default function DownloadButton({ product, gradient }) {
     );
   }
 
-  // PAID PRODUCT - Added to cart state
   if (addedToCart) {
     return (
       <div className="space-y-2">
@@ -187,7 +177,6 @@ export default function DownloadButton({ product, gradient }) {
     );
   }
 
-  // PAID PRODUCT - Two buttons: Add to Cart and Buy Now
   return (
     <div className="space-y-3">
       <Button
