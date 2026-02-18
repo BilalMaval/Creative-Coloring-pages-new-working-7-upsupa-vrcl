@@ -16,6 +16,7 @@ export default function DownloadButton({ product, gradient }) {
     const cart = savedCart ? JSON.parse(savedCart) : [];
 
     const existingIndex = cart.findIndex(item => item.id === product.id);
+
     if (existingIndex >= 0) {
       cart[existingIndex].quantity += 1;
     } else {
@@ -36,7 +37,34 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
+  // ✅ Clean professional download (no flicker, no new tab)
+  const handleFreeDownload = () => {
+    if (!product.pdfPath) {
+      alert('Download file not available. Please contact support.');
+      return;
+    }
 
+    setDownloadStarted(true);
+
+    const filePath = encodeURIComponent(
+      product.pdfPath.replace(/^.*\/uploads\//, '')
+    );
+
+    const fileName = encodeURIComponent(
+      product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
+    );
+
+    const url = `/api/download?file=${filePath}&name=${fileName}`;
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => setDownloadStarted(false), 3000);
+  };
 
   const handleAddToCart = () => {
     setLoading(true);
@@ -58,35 +86,7 @@ export default function DownloadButton({ product, gradient }) {
       addToCart();
       router.push('/checkout');
     } catch (error) {
-      console.error('Error:', errconst handleFreeDownload = () => {
-  if (!product.pdfPath) {
-    alert('Download file not available. Please contact support.');
-    return;
-  }
-
-  setDownloadStarted(true);
-
-  const filePath = encodeURIComponent(
-    product.pdfPath.replace(/^.*\/uploads\//, '')
-  );
-
-  const fileName = encodeURIComponent(
-    product.title.replace(/[^a-z0-9]/gi, '_') + '.pdf'
-  );
-
-  const url = `/api/download?file=${filePath}&name=${fileName}`;
-
-  // Professional download (no new tab, no flicker)
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName; // Important
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-
-  setTimeout(() => setDownloadStarted(false), 3000);
-};
-or);
+      console.error('Error:', error);
       alert('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -175,6 +175,7 @@ or);
           </>
         )}
       </Button>
+
       <Button
         onClick={handleAddToCart}
         variant="outline"
