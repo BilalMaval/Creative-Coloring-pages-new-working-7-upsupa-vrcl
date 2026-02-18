@@ -4,45 +4,29 @@ export const runtime = 'nodejs';
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const filePath = searchParams.get('file'); // e.g., "pdfs/1771434828132-bdkgq8.pdf"
-    const fileName = searchParams.get('name') || 'file.pdf';
+    const url = new URL(request.url);
+    const filePath = url.searchParams.get('file'); // e.g., "pdfs/1771434828132-bdkgq8.pdf"
+    const fileName = url.searchParams.get('name') || 'download.pdf';
 
     if (!filePath) {
-      return new Response(JSON.stringify({ error: 'File not specified' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response('File not specified', { status: 400 });
     }
 
-    // Download the file from Supabase bucket 'uploads'
+    // Generate signed URL valid for 60 seconds
     const { data, error } = await supabase.storage
       .from('uploads')
-      .download(filePath);
+      .createSignedUrl(filePath, 60);
 
-    if (error || !data) {
-      console.error('Supabase download error:', error);
-      return new Response(JSON.stringify({ error: 'Failed to fetch file' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    if (error || !data.signedUrl) {
+      console.error('Error generating signed URL:', error);
+      return new Response('Download failed', { status: 500 });
     }
 
-    // Convert to ArrayBuffer for streaming
-    const arrayBuffer = await data.arrayBuffer();
+    // Redirect browser to signed URL
+    return Response.redirect(data.signedUrl, 302);
 
-    return new Response(arrayBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${fileName}"`, // Forces download
-      },
-    });
   } catch (err) {
-    console.error('Server download error:', err);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('Download route error:', err);
+    return new Response('Internal Server Error', { status: 500 });
   }
 }
