@@ -16,11 +16,16 @@ export async function POST(request) {
       );
     }
 
-    // ✅ Validate using real File object
+    // Extract proper file values
+    const fileName = file.name;
+    const mimeType = file.type;
+    const fileSize = file.size;
+
+    // ✅ Validate correctly
     if (type === 'image') {
-      validateImageFile(file);
+      validateImageFile(fileName, mimeType, fileSize);
     } else if (type === 'pdf') {
-      validatePdfFile(file);
+      validatePdfFile(fileName, mimeType, fileSize);
     } else {
       return NextResponse.json(
         { success: false, error: 'Invalid file type' },
@@ -30,8 +35,12 @@ export async function POST(request) {
 
     const folder = type === 'pdf' ? 'pdfs' : 'images';
 
-    // ✅ Pass real File object to uploadFile
-    const url = await uploadFile(file, folder);
+    // ✅ Convert File → Buffer (required for Supabase)
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    // ✅ Upload properly
+    const url = await uploadFile(buffer, folder, fileName, mimeType);
 
     return NextResponse.json({ success: true, url });
 
