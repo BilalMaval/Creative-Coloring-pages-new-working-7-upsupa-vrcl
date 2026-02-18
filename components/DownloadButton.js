@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Download, Loader2, ShoppingCart, Check, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/upload'; // make sure supabase client is imported
 
 export default function DownloadButton({ product, gradient }) {
   const [loading, setLoading] = useState(false);
@@ -14,8 +15,8 @@ export default function DownloadButton({ product, gradient }) {
   const addToCart = () => {
     const savedCart = localStorage.getItem('cart');
     const cart = savedCart ? JSON.parse(savedCart) : [];
-    const existingIndex = cart.findIndex(item => item.id === product.id);
 
+    const existingIndex = cart.findIndex(item => item.id === product.id);
     if (existingIndex >= 0) {
       cart[existingIndex].quantity += 1;
     } else {
@@ -36,7 +37,6 @@ export default function DownloadButton({ product, gradient }) {
     return true;
   };
 
-  // Updated download function
   const handleFreeDownload = async () => {
     setLoading(true);
 
@@ -47,37 +47,34 @@ export default function DownloadButton({ product, gradient }) {
         return;
       }
 
-      // Track download via API
-      try {
-        await fetch('/api/download', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id })
-        });
-      } catch (e) {
-        console.log('Download tracking failed, continuing with download');
+      // Generate signed URL (valid for 60 seconds)
+      const path = product.pdfPath.replace(
+        `${supabase.storageUrl}/object/public/uploads/`,
+        ''
+      );
+      const { data, error } = await supabase.storage
+        .from('uploads')
+        .createSignedUrl(path, 60);
+
+      if (error) {
+        console.error('Error creating signed URL:', error);
+        alert('Download failed. Please try again.');
+        setLoading(false);
+        return;
       }
 
-      // --- NEW: fetch file as blob and force download ---
-      const response = await fetch(product.pdfPath);
-      if (!response.ok) throw new Error('Failed to fetch PDF');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      // Create download link and trigger click
       const link = document.createElement('a');
-      link.href = url;
+      link.href = data.signedUrl;
       link.download = `${product.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
       document.body.appendChild(link);
       link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-      // --- END NEW LOGIC ---
+      document.body.removeChild(link);
 
       setDownloadStarted(true);
       setTimeout(() => setDownloadStarted(false), 3000);
-
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Download error:', error);
       alert('An error occurred. Please try again.');
     } finally {
       setLoading(false);
@@ -86,7 +83,6 @@ export default function DownloadButton({ product, gradient }) {
 
   const handleAddToCart = async () => {
     setLoading(true);
-
     try {
       addToCart();
       setAddedToCart(true);
@@ -101,7 +97,6 @@ export default function DownloadButton({ product, gradient }) {
 
   const handleBuyNow = async () => {
     setLoading(true);
-
     try {
       addToCart();
       router.push('/checkout');
@@ -113,9 +108,7 @@ export default function DownloadButton({ product, gradient }) {
     }
   };
 
-  const goToCart = () => {
-    router.push('/cart');
-  };
+  const goToCart = () => router.push('/cart');
 
   if (downloadStarted) {
     return (
