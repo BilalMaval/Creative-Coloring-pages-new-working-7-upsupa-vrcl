@@ -1,36 +1,26 @@
 import { NextResponse } from 'next/server';
-import { supabase, uploadFile, validateImageFile, validatePdfFile } from '@/lib/upload';
+import { uploadFile, validateImageFile, validatePdfFile } from '@/lib/upload';
 
-export const runtime = 'nodejs'; // Required for formData in Next.js app directory
+export const runtime = 'nodejs';
 
 export async function POST(request) {
   try {
-    // Parse form data
     const formData = await request.formData();
-    const file = formData.get('file'); // File object
+    const file = formData.get('file');
     const type = formData.get('type'); // 'image' or 'pdf'
 
-    if (!file) {
+    if (!file || typeof file === 'string') {
       return NextResponse.json(
         { success: false, error: 'No file provided' },
         { status: 400 }
       );
     }
 
-    // Convert File object to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const fileData = {
-      name: file.name,
-      type: file.type,
-      data: buffer,
-    };
-
-    // Validate file
+    // ✅ Validate using real File object
     if (type === 'image') {
-      validateImageFile(fileData);
+      validateImageFile(file);
     } else if (type === 'pdf') {
-      validatePdfFile(fileData);
+      validatePdfFile(file);
     } else {
       return NextResponse.json(
         { success: false, error: 'Invalid file type' },
@@ -38,13 +28,13 @@ export async function POST(request) {
       );
     }
 
-    // Determine folder
     const folder = type === 'pdf' ? 'pdfs' : 'images';
 
-    // Upload to Supabase
-    const url = await uploadFile(fileData, folder);
+    // ✅ Pass real File object to uploadFile
+    const url = await uploadFile(file, folder);
 
     return NextResponse.json({ success: true, url });
+
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
