@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/upload';
 import { prisma } from '@/lib/prisma'; // adjust path if different
 
@@ -8,7 +9,7 @@ export async function GET(request) {
     const url = new URL(request.url);
     const filePathParam = url.searchParams.get('file'); // e.g., "pdfs/1771434828132-bdkgq8.pdf"
     const fileNameParam = url.searchParams.get('name') || 'download.pdf';
-    const productId = url.searchParams.get('productId'); // product ID for counting (UUID string)
+    const productId = url.searchParams.get('productId'); // product ID for counting
 
     if (!filePathParam) {
       return new Response('File not specified', { status: 400 });
@@ -17,9 +18,8 @@ export async function GET(request) {
     // Increment download count
     if (productId) {
       try {
-        // ✅ Use the string UUID directly, no Number()
         await prisma.product.update({
-          where: { id: productId },
+          where: { id: Number(productId) },
           data: {
             downloadCount: {
               increment: 1,
