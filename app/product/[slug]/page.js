@@ -1,4 +1,3 @@
-export const revalidate = 120;
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import ProductPageClient from './ProductPageClient';
